@@ -36,5 +36,11 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new WatermarkCommand(_executor, _commandBuilder);
         }
+
+        public ICommand<BlackAndWhiteModel> CreateBlackAndWhiteCommand()
+        {
+            return new BlackAndWhiteCommand(_executor, _commandBuilder);
+        }
+
     }
 }
