@@ -14,6 +14,8 @@ namespace FFmpeg.Infrastructure.Services
     public interface IFFmpegServiceFactory
     {
         ICommand<WatermarkModel> CreateWatermarkCommand();
+        ICommand<BlackAndWhiteModel> CreateBlackAndWhiteCommand();
+
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
