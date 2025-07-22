@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace FFmpeg.Core.Models
 {
-    class RemoveAudioModel
+    public class RemoveAudioModel
     {
+        public string InputFile { get; set; }
+        public string OutputFile { get; set; }
     }
+
 }
