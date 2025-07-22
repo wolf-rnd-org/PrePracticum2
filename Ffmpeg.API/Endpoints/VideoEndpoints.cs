@@ -111,7 +111,6 @@ namespace FFmpeg.API.Endpoints
 
             try
             {
-                // שמירת הקובץ שהועלה
                 string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
                 string extension = Path.GetExtension(dto.VideoFile.FileName);
                 string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
