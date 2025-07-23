@@ -36,5 +36,10 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new WatermarkCommand(_executor, _commandBuilder);
         }
+
+        public ICommand<WatermarkModel> CreateTimestampCommand()
+        {
+            return new WatermarkCommand(_executor, _commandBuilder);
+        }
     }
 }
