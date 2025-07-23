@@ -127,10 +127,10 @@ namespace FFmpeg.API.Endpoints
                     {
                         InputFile = videoFileName,
                         OutputFile = outputFileName,
-                        XPosition = dto.XPosition,
-                        YPosition = dto.YPosition,
-                        FontSize = dto.FontSize,
-                        FontColor = dto.FontColor,
+                        XPosition = dto.XPosition==0?10: dto.XPosition,
+                        YPosition = dto.YPosition == 0 ? 10 : dto.YPosition,
+                        FontSize = dto.FontSize == 0 ? 10 : dto.FontSize,
+                        FontColor = string.IsNullOrWhiteSpace(dto.FontColor) ?"white": dto.FontColor,
                         IsVideo = true,
                         VideoCodec = "libx264"
                     });

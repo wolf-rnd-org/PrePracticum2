@@ -21,13 +21,14 @@ namespace FFmpeg.Infrastructure.Commands
 
         public async Task<CommandResult> ExecuteAsync(TimestampModel model)
         {
-            string drawtextFilter = $"drawtext=text='%{{pts\\:hms}}':x={model.XPosition}:y={model.YPosition}:fontsize={model.FontSize}:fontcolor={model.FontColor}";
+            string drawtextFilter = $"[v:0]drawtext=text='%{{pts\\:hms}}':x={model.XPosition}:y={model.YPosition}:" +
+                $"fontsize={model.FontSize}:fontcolor={model.FontColor}[out]";
 
             CommandBuilder = _commandBuilder
                 .SetInput(model.InputFile)
-                .AddFilterComplex(drawtextFilter)
-                .AddOption($"-map 0:a?")
-                .AddOption($"-c:a copy");
+                .AddFilterComplex(drawtextFilter);
+                //.AddOption($"-map 0:a?")
+                //.AddOption($"-c:a copy");
 
             if (model.IsVideo)
             {
