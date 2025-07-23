@@ -28,15 +28,7 @@ namespace FFmpeg.Infrastructure.Commands
 
             CommandBuilder = _commandBuilder
                 .SetInput(model.InputFile)
-<<<<<<< Updated upstream
                 .AddFilterComplex(drawtextFilter);
-=======
-
-                .AddFilterComplex(drawtextFilter);
-                //.AddOption("-map 0:v");
-                //.AddOption("-map 0:a?")
-                //.AddOption("-c:a copy");
->>>>>>> Stashed changes
 
             if (model.IsVideo)
             {
