@@ -15,12 +15,14 @@ namespace FFmpeg.API.Endpoints
 {
     public static class VideoEndpoints
     {
+
         public static void MapEndpoints(this WebApplication app)
         {
             app.MapPost("/api/video/watermark", AddWatermark)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
         }
+
 
         private static async Task<IResult> AddWatermark(
             HttpContext context,
