@@ -15,7 +15,7 @@ namespace FFmpeg.Infrastructure.Commands
         public AudioReplaceCommand(FFmpegExecutor executor, ICommandBuilder commandBuilder)
             : base(executor)
         {
-            _commandBuilder = commandBuilder;
+            _commandBuilder = commandBuilder ?? throw new ArgumentNullException(nameof(commandBuilder));
         }
         public async Task<CommandResult> ExecuteAsync(AudioReplaceModel model)
         {
