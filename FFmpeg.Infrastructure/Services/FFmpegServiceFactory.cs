@@ -20,6 +20,8 @@ namespace FFmpeg.Infrastructure.Services
     {
         private readonly FFmpegExecutor _executor;
         private readonly ICommandBuilder _commandBuilder;
+        private readonly string ffmpegPath;
+
 
         public FFmpegServiceFactory(IConfiguration configuration, ILogger logger = null)
         {
@@ -35,6 +37,10 @@ namespace FFmpeg.Infrastructure.Services
         public ICommand<WatermarkModel> CreateWatermarkCommand()
         {
             return new WatermarkCommand(_executor, _commandBuilder);
+        }
+        public AddAnimatedTextCommand CreateAddAnimatedTextCommand()
+        {
+            return new AddAnimatedTextCommand(ffmpegPath);
         }
     }
 }
