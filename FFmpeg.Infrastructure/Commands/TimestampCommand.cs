@@ -21,7 +21,6 @@ namespace FFmpeg.Infrastructure.Commands
 
         public async Task<CommandResult> ExecuteAsync(TimestampModel model)
         {
-
             string drawtextFilter =
                 $"[0:v]drawtext=text='%{{pts\\:hms}}':x={model.XPosition}:y={model.YPosition}:fontsize={model.FontSize}:" +
                 $"fontcolor={model.FontColor}[out]";
