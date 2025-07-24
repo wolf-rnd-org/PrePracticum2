@@ -22,7 +22,6 @@ namespace Ffmpeg.Command.Commands
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-
         public async Task<CommandResult> ExecuteAsync(AudioMixModel model)
         {
             CommandBuilder = _commandBuilder
@@ -37,6 +36,5 @@ namespace Ffmpeg.Command.Commands
 
             return await RunAsync();
         }
-
     }
 }
