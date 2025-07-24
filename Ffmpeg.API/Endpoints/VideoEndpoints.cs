@@ -21,8 +21,8 @@ namespace FFmpeg.API.Endpoints
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
             app.MapPost("/api/video/remove-audio", RemoveAudio)
-        .DisableAntiforgery()
-        .WithMetadata(new RequestSizeLimitAttribute(104857600));
+                .DisableAntiforgery()
+                .WithMetadata(new RequestSizeLimitAttribute(104857600));
         }
 
         private static async Task<IResult> AddWatermark(
@@ -111,7 +111,6 @@ namespace FFmpeg.API.Endpoints
 
             try
             {
-                // שמירת הקובץ שהועלה
                 string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
                 string extension = Path.GetExtension(dto.VideoFile.FileName);
                 string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
