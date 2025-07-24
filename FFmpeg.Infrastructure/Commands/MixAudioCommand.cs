@@ -15,7 +15,7 @@ namespace Ffmpeg.Command.Commands
         public MixAudioCommand(
             FFmpegExecutor executor,
             ICommandBuilder commandBuilder,
-            ILogger<MixAudioCommand> logger) // הוסף כאן את ה-logger
+            ILogger<MixAudioCommand> logger)
             : base(executor)
         {
             _commandBuilder = commandBuilder ?? throw new ArgumentNullException(nameof(commandBuilder));
@@ -26,15 +26,14 @@ namespace Ffmpeg.Command.Commands
         public async Task<CommandResult> ExecuteAsync(AudioMixModel model)
         {
             CommandBuilder = _commandBuilder
-      .SetInput(model.InputFile1)
-      .SetInput(model.InputFile2)
-      .AddFilterComplex("[0:a][1:a]amix=inputs=2:duration=longest[aout]")
-      .AddArgument("-map", "[aout]") // ← כאן היה השגיאה
-      .AddArgument("-c:a", "libmp3lame")
-      .SetOutput(model.OutputFile);
+              .SetInput(model.InputFile1)
+              .SetInput(model.InputFile2)
+              .AddFilterComplex("[0:a][1:a]amix=inputs=2:duration=longest[aout]")
+              .AddArgument("-map", "[aout]")
+              .AddArgument("-c:a", "libmp3lame")
+              .SetOutput(model.OutputFile);
 
             _logger.LogInformation("FFmpeg command: {command}", CommandBuilder.Build());
-
 
             return await RunAsync();
         }
