@@ -36,5 +36,11 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new WatermarkCommand(_executor, _commandBuilder);
         }
+
+        public ICommand<SplitScreenModel> CreateSplitScreenCommand()
+        {
+            return new SplitScreenCommand(_executor, _commandBuilder);
+        }
+
     }
 }
