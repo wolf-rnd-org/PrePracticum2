@@ -14,6 +14,8 @@ namespace FFmpeg.Infrastructure.Services
     public interface IFFmpegServiceFactory
     {
         ICommand<WatermarkModel> CreateWatermarkCommand();
+        ICommand<BlurEffectModel> CreateBlurEffectCommand();
+
         ICommand<TimestampModel> CreateTimestampCommand();
     }
 
@@ -41,6 +43,11 @@ namespace FFmpeg.Infrastructure.Services
         public ICommand<TimestampModel> CreateTimestampCommand()
         {
             return new TimestampCommand(_executor, _commandBuilder);
+        }
+
+        public ICommand<BlurEffectModel> CreateBlurEffectCommand()
+        {
+            return new BlurEffectComand(_executor, _commandBuilder);
         }
     }
 }
