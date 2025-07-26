@@ -23,6 +23,10 @@ namespace FFmpeg.Infrastructure.Commands
         {
             string scaleFilter = $"scale={model.Width}:{model.Height}";
 
+            if (model.Width <= 0 || model.Height <= 0)
+            {
+                throw new ArgumentException("Width and Height must be greater than zero.");
+            }
             CommandBuilder = _commandBuilder
                 .SetInput(model.InputFile)
                 .AddOption($"-vf {scaleFilter}")
