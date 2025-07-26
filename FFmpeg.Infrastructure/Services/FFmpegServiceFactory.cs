@@ -42,5 +42,6 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new TimestampCommand(_executor, _commandBuilder);
         }
+
     }
 }
