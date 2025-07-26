@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FFmpeg.Core.Models
 {
-    public class AudioReplaceModel
+    public class ReplaceAudioModel
     {
         public string VideoFile { get; set; }
         public string NewAudioFile { get; set; }

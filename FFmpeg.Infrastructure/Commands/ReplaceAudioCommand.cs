@@ -9,15 +9,15 @@ using System.Threading.Tasks;
 
 namespace FFmpeg.Infrastructure.Commands
 {
-    public class AudioReplaceCommand: BaseCommand, ICommand<AudioReplaceModel>
+    public class ReplaceAudioCommand : BaseCommand, ICommand<ReplaceAudioModel>
     {
         private readonly ICommandBuilder _commandBuilder;
-        public AudioReplaceCommand(FFmpegExecutor executor, ICommandBuilder commandBuilder)
+        public ReplaceAudioCommand(FFmpegExecutor executor, ICommandBuilder commandBuilder)
             : base(executor)
         {
             _commandBuilder = commandBuilder ?? throw new ArgumentNullException(nameof(commandBuilder));
         }
-        public async Task<CommandResult> ExecuteAsync(AudioReplaceModel model)
+        public async Task<CommandResult> ExecuteAsync(ReplaceAudioModel model)
         {
             CommandBuilder = _commandBuilder
                 .SetInput(model.VideoFile) // input.mp4
