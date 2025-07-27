@@ -18,6 +18,8 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<RemoveAudioModel> CreateRemoveAudioCommand();
 
         ICommand<TimestampModel> CreateTimestampCommand();
+      
+        ICommand<ConvertAudioModel> CreateConvertAudioCommand();
 
     }
 
@@ -50,5 +52,11 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new TimestampCommand(_executor, _commandBuilder);
         }
+
+        public ICommand<ConvertAudioModel> CreateConvertAudioCommand()
+        {
+            return new ConvertAudioCommand(_executor, _commandBuilder);
+        }
+
     }
 }
