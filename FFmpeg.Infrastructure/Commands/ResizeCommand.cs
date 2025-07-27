@@ -37,5 +37,8 @@ namespace FFmpeg.Infrastructure.Commands
         }
     }
 }
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 9424b7c8b5fdde016c0b6581649194ca67e88d29
