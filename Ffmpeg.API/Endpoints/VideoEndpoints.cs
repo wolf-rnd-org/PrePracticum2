@@ -22,6 +22,11 @@ namespace FFmpeg.API.Endpoints
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
 
+            app.MapPost("/api/video/greenscreen", ReplaceGreenScreen)
+                .DisableAntiforgery()
+                //.WithName("ReplaceGreenScreen")
+                .Accepts<GreenScreenDto>("multipart/form-data");
+
             // ----------- AUDIO ENDPOINT -----------
             app.MapPost("/api/audio/convert", ConvertAudio)
                 .DisableAntiforgery()
@@ -89,6 +94,72 @@ namespace FFmpeg.API.Endpoints
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error in AddWatermark endpoint");
+                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
+            }
+        }
+
+        private static async Task<IResult> ReplaceGreenScreen(
+            HttpContext context,
+            [FromForm] GreenScreenDto dto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+            try
+            {
+                if (dto.InputFile == null || dto.BackgroundFile == null)
+                {
+                    return Results.BadRequest("Input file and background file are required");
+                }
+
+                string originalFileName = Path.GetFileName(dto.InputFile.FileName);
+
+                // שמירת הקבצים לקבצים זמניים
+                string inputFileName = await fileService.SaveUploadedFileAsync(dto.InputFile);
+                string backgroundFileName = await fileService.SaveUploadedFileAsync(dto.BackgroundFile);
+                
+                string extension = Path.GetExtension(originalFileName);
+                string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
+
+                List<string> filesToCleanup = new() { inputFileName, backgroundFileName, outputFileName };
+
+                try
+                {
+                    var command = ffmpegService.CreateGreenScreenCommand();
+                    var result = await command.ExecuteAsync(new GreenScreenModel
+                    {
+                        InputFile = inputFileName,
+                        BackgroundFile = backgroundFileName,
+                        OutputFile = outputFileName,
+                        Similarity = dto.Similarity ?? 0.1,
+                        Blend = dto.Blend ?? 0.2,
+                        ChromaColor = string.IsNullOrWhiteSpace(dto.ChromaColor) ? "0x00FF00" : dto.ChromaColor,
+                        VideoCodec = "libx264"
+                    });
+
+                    if (!result.IsSuccess)
+                    {
+                        logger.LogError("FFmpeg command failed: {ErrorMessage}, Command: {Command}",
+                            result.ErrorMessage, result.CommandExecuted);
+                        return Results.Problem("Failed to replace green screen: " + result.ErrorMessage, statusCode: 500);
+                    }
+
+                    byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+
+                    return Results.File(fileBytes, "video/mp4", originalFileName);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error processing green screen replacement");
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in ReplaceGreenScreen endpoint");
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }

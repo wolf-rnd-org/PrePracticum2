@@ -16,6 +16,7 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<WatermarkModel> CreateWatermarkCommand();
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
+        ICommand<GreenScreenModel> CreateGreenScreenCommand();
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -49,5 +50,9 @@ namespace FFmpeg.Infrastructure.Services
             return new ConvertAudioCommand(_executor, _commandBuilder);
         }
 
+        public ICommand<GreenScreenModel> CreateGreenScreenCommand()
+        {
+            return new GreenScreenReplacerCommand(_executor, _commandBuilder);
+        }
     }
 }
