@@ -15,7 +15,7 @@ namespace FFmpeg.Infrastructure.Services
     {
         ICommand<WatermarkModel> CreateWatermarkCommand();
 
-      ICommand<RemoveAudioModel> CreateRemoveAudioCommand();
+        ICommand<RemoveAudioModel> CreateRemoveAudioCommand();
 
         ICommand<TimestampModel> CreateTimestampCommand();
 
