@@ -15,6 +15,8 @@ namespace FFmpeg.Infrastructure.Services
     {
         ICommand<WatermarkModel> CreateWatermarkCommand();
         ICommand<TimestampModel> CreateTimestampCommand();
+        ICommand<ResizeModel> CreateResizeCommand();
+        
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -42,5 +44,11 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new TimestampCommand(_executor, _commandBuilder);
         }
+
+        public ICommand<ResizeModel> CreateResizeCommand()
+        {
+            return new ResizeCommand(_executor, _commandBuilder);
+        }
+
     }
 }
