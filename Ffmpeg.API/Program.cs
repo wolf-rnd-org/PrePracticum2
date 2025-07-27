@@ -55,7 +55,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapEndpoints();
-app.MapAudioEndpoints();
 
 app.MapGet("/", () => { return "FFmpeg API is running"; });
 app.Run();
