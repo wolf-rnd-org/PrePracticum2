@@ -9,7 +9,6 @@ namespace Ffmpeg.Command.Commands
     public class MixAudioCommand : BaseCommand, ICommand<AudioMixModel>
     {
         private readonly ICommandBuilder _commandBuilder;
-
         private readonly ILogger<MixAudioCommand> _logger;
 
         public MixAudioCommand(
@@ -31,7 +30,6 @@ namespace Ffmpeg.Command.Commands
               .AddArgument("-map", "[aout]")
               .AddArgument("-c:a", "libmp3lame")
               .SetOutput(model.OutputFile);
-
             _logger.LogInformation("FFmpeg command: {command}", CommandBuilder.Build());
 
             return await RunAsync();
