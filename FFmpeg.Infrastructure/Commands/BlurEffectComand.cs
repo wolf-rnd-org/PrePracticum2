@@ -18,8 +18,6 @@ namespace FFmpeg.Infrastructure.Commands
             CommandBuilder = _commandBuilder.SetInput(model.VideoName)
                 .SetOutput(model.OutputName)
                  .AddOption($"-vf \"gblur=sigma={model.Sigma}\"");
-
-
             return RunAsync();
         }
     }
