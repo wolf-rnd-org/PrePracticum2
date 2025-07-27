@@ -19,19 +19,21 @@ namespace Ffmpeg.Command.Commands
         public async Task<CommandResult> ExecuteAsync(ColorFilterModel model)
         {
             CommandBuilder = _commandBuilder
-                .SetInput(model.InputFile)
-                .AddOption("-vf hue=s=0")        
-                .AddOption("-map 0:a?")          
-                .AddOption("-c:a copy");       
+             .SetInput(model.InputFile)
+             .AddOption("-vf hue=s=0")
+             .AddOption("-map 0:v")
+             .AddOption("-map 0:a?")
+             .AddOption($"-c:v {model.VideoCodec}")
+             .AddOption("-c:a copy");
 
             if (model.IsVideo)
             {
-                CommandBuilder.SetVideoCodec(model.VideoCodec); 
+                CommandBuilder.SetVideoCodec(model.VideoCodec);
             }
 
-            CommandBuilder.SetOutput(model.OutputFile, model.IsVideo ? false : true); 
+            CommandBuilder.SetOutput(model.OutputFile, model.IsVideo ? false : true);
 
-            return await RunAsync(); 
+            return await RunAsync();
         }
     }
 }
