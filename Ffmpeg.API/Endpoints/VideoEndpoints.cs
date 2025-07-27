@@ -20,6 +20,10 @@ namespace FFmpeg.API.Endpoints
             app.MapPost("/api/video/watermark", AddWatermark)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
+
+            app.MapPost("/api/video/bitrateLimiting", BitrateLimiting)
+                .DisableAntiforgery()
+                .WithMetadata(new RequestSizeLimitAttribute(104857600));
         }
 
         private static async Task<IResult> AddWatermark(
@@ -91,6 +95,74 @@ namespace FFmpeg.API.Endpoints
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error in AddWatermark endpoint");
+                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
+            }
+
+        }
+
+        private static async Task<IResult> BitrateLimiting(HttpContext context, [FromForm] BitrateLimitingDTO bitrateLimitingDto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+            try
+            {
+                // Validate request
+                if (bitrateLimitingDto.VideoFile == null || bitrateLimitingDto.BitrateLimitingFile == null)
+                {
+                    return Results.BadRequest("Video file and watermark file are required");
+                }
+
+                // Save uploaded files
+                string videoFileName = await fileService.SaveUploadedFileAsync(bitrateLimitingDto.VideoFile);
+                string bitrateLimitingFileName = await fileService.SaveUploadedFileAsync(bitrateLimitingDto.BitrateLimitingFile);
+
+                // Generate output filename
+                string extension = Path.GetExtension(bitrateLimitingDto.VideoFile.FileName);
+                string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
+
+                // Track files to clean up
+                List<string> filesToCleanup = new List<string> { videoFileName, bitrateLimitingFileName, outputFileName };
+
+                try
+                {
+                    // Create and execute the watermark command
+                    var command = ffmpegService.CreateBitrateLimitingCommand();
+                    var result = await command.ExecuteAsync(new BitrateLimitingModel
+                    {
+                        InputFile = videoFileName,
+                        OutputFile = outputFileName,
+                        Bitrate = bitrateLimitingDto.Bitrate
+                    });
+
+                    if (!result.IsSuccess)
+                    {
+                        logger.LogError("FFmpeg command failed: {ErrorMessage}, Command: {Command}",
+                            result.ErrorMessage, result.CommandExecuted);
+                        return Results.Problem("Failed to bitrate limiting: " + result.ErrorMessage, statusCode: 500);
+                    }
+
+                    // Read the output file
+                    byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
+
+                    // Clean up temporary files
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+
+                    // Return the file
+                    return Results.File(fileBytes, "video/mp4", bitrateLimitingDto.VideoFile.FileName);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error processing bitrate limiting request");
+                    // Clean up on error
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in BitrateLimiting endpoint");
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
 
