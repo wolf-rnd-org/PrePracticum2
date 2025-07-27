@@ -11,11 +11,7 @@ namespace Ffmpeg.Command.Commands
         private readonly ICommandBuilder _commandBuilder;
         private readonly ILogger<MixAudioCommand> _logger;
 
-        public MixAudioCommand(
-            FFmpegExecutor executor,
-            ICommandBuilder commandBuilder,
-            ILogger<MixAudioCommand> logger)
-            : base(executor)
+        public MixAudioCommand(FFmpegExecutor executor, ICommandBuilder commandBuilder, ILogger<MixAudioCommand> logger) : base(executor)
         {
             _commandBuilder = commandBuilder ?? throw new ArgumentNullException(nameof(commandBuilder));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
