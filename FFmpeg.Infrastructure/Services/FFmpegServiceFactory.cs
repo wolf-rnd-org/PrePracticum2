@@ -1,5 +1,6 @@
 ﻿using Ffmpeg.Command;
 using Ffmpeg.Command.Commands;
+
 using FFmpeg.Core.Models;
 using FFmpeg.Infrastructure.Commands;
 using Microsoft.Extensions.Configuration;
@@ -16,6 +17,7 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<WatermarkModel> CreateWatermarkCommand();
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
+        ICommand<CutSectionModel> CreateCutCommand();
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -47,6 +49,11 @@ namespace FFmpeg.Infrastructure.Services
         public ICommand<ConvertAudioModel> CreateConvertAudioCommand()
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
+        }
+
+        public ICommand<CutSectionModel> CreateCutCommand()
+        {
+            return new CutSectionCommand(_executor, _commandBuilder);
         }
 
     }
