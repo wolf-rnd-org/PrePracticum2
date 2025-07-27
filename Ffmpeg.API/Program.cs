@@ -55,6 +55,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapEndpoints();
+app.MapAudioEndpoints();
 
 
 
