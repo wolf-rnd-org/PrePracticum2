@@ -41,6 +41,5 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new ReplaceAudioCommand(_executor, _commandBuilder);
         }
-
     }
 }
