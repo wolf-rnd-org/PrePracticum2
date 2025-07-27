@@ -14,7 +14,11 @@ namespace FFmpeg.Infrastructure.Services
     public interface IFFmpegServiceFactory
     {
         ICommand<WatermarkModel> CreateWatermarkCommand();
+      
         ICommand<RemoveAudioModel> CreateRemoveAudioCommand();
+
+        ICommand<TimestampModel> CreateTimestampCommand();
+
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -41,6 +45,10 @@ namespace FFmpeg.Infrastructure.Services
         public ICommand<RemoveAudioModel> CreateRemoveAudioCommand()
         {
             return new RemoveAudioCommand(_executor, _commandBuilder);
+        }
+        public ICommand<TimestampModel> CreateTimestampCommand()
+        {
+            return new TimestampCommand(_executor, _commandBuilder);
         }
     }
 }
