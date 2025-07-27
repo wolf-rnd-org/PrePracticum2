@@ -6,5 +6,6 @@
         public string ErrorMessage { get; set; }
         public string CommandExecuted { get; set; }
         public string OutputLog { get; set; }
+        public bool Error { get; set; }
     }
 }
