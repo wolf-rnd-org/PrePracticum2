@@ -15,6 +15,7 @@ namespace FFmpeg.Infrastructure.Services
     {
         ICommand<WatermarkModel> CreateWatermarkCommand();
         ICommand<TimestampModel> CreateTimestampCommand();
+        ICommand<MergeVideosModel> CreateMergeVideosCommand();
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -42,7 +43,7 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new TimestampCommand(_executor, _commandBuilder);
         }
-
+        
         // הקוד שלי שהוספתי למשימת merge videos
         public ICommand<MergeVideosModel> CreateMergeVideosCommand()
         {
