@@ -1,4 +1,4 @@
-﻿using Ffmpeg.Command;
+using Ffmpeg.Command;
 using Ffmpeg.Command.Commands;
 using FFmpeg.Core.Models;
 using FFmpeg.Infrastructure.Commands;
@@ -45,9 +45,11 @@ namespace FFmpeg.Infrastructure.Services
             return new TimestampCommand(_executor, _commandBuilder);
         }
 
+
         public ICommand<ResizeModel> CreateResizeCommand()
         {
             return new ResizeCommand(_executor, _commandBuilder);
+
         }
 
     }
