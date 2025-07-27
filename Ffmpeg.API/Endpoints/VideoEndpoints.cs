@@ -21,8 +21,8 @@ namespace FFmpeg.API.Endpoints
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
             app.MapPost("/api/video/timestamp", AddTimestamp)
-            .DisableAntiforgery()
-            .WithMetadata(new RequestSizeLimitAttribute(104857600));
+                .DisableAntiforgery()
+                .WithMetadata(new RequestSizeLimitAttribute(104857600));
         }
 
         private static async Task<IResult> AddWatermark(
@@ -127,10 +127,10 @@ namespace FFmpeg.API.Endpoints
                     {
                         InputFile = videoFileName,
                         OutputFile = outputFileName,
-                        XPosition = dto.XPosition==0?10: dto.XPosition,
+                        XPosition = dto.XPosition == 0 ? 10 : dto.XPosition,
                         YPosition = dto.YPosition == 0 ? 10 : dto.YPosition,
                         FontSize = dto.FontSize == 0 ? 10 : dto.FontSize,
-                        FontColor = string.IsNullOrWhiteSpace(dto.FontColor) ?"white": dto.FontColor,
+                        FontColor = string.IsNullOrWhiteSpace(dto.FontColor) ? "white" : dto.FontColor,
                         IsVideo = true,
                         VideoCodec = "libx264"
                     });
