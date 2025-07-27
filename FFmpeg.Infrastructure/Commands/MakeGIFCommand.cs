@@ -12,7 +12,6 @@ namespace FFmpeg.Infrastructure.Commands
     public class MakeGIFCommand : BaseCommand, ICommand<GIFModel>
     {
         private readonly ICommandBuilder _commandBuilder;
-
         public WatermarkCommand(FFmpegExecutor executor, ICommandBuilder commandBuilder)
             : base(executor)
         {
@@ -29,7 +28,6 @@ namespace FFmpeg.Infrastructure.Commands
             {
                 CommandBuilder.SetVideoCodec(model.VideoCodec);
             }
-
             return await RunAsync();
         }
 
