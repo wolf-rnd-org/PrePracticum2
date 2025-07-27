@@ -16,6 +16,7 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<WatermarkModel> CreateWatermarkCommand();
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
+        ICommand<RotateVideoModel> CreateRotateVideoCommand();
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -49,5 +50,9 @@ namespace FFmpeg.Infrastructure.Services
             return new ConvertAudioCommand(_executor, _commandBuilder);
         }
 
+        public ICommand<RotateVideoModel> CreateRotateVideoCommand()
+        {
+            return new RotateVideoCommand(_executor, _commandBuilder);
+        }
     }
 }
