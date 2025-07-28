@@ -15,16 +15,16 @@ namespace FFmpeg.API.Endpoints
 {
     public static class VideoEndpoints
     {
+        private const int MaxUploadSizeBytes = 100 * 1024 * 1024; // 100 MB
         public static void MapEndpoints(this WebApplication app)
         {
-            // ----------- VIDEO ENDPOINT -----------
             app.MapPost("/api/video/watermark", AddWatermark)
                 .DisableAntiforgery()
-                .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSizeBytes));
 
             app.MapPost("/api/video/crop", CropVideo)
                 .DisableAntiforgery()
-                .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSizeBytes));
 
             // ----------- AUDIO ENDPOINT -----------
             app.MapPost("/api/audio/convert", ConvertAudio)
@@ -32,7 +32,6 @@ namespace FFmpeg.API.Endpoints
                 .WithName("ConvertAudio")
                 .Accepts<ConvertAudioDto>("multipart/form-data");
         }
-
         // ---------- VIDEO ----------
         private static async Task<IResult> AddWatermark(HttpContext context, [FromForm] WatermarkDto dto)
         {
