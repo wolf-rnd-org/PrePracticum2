@@ -21,6 +21,11 @@ namespace FFmpeg.API.Endpoints
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
 
+            app.MapPost("/api/video/replace-audio", ReplaceAudio)
+                .DisableAntiforgery()
+                .WithMetadata(new RequestSizeLimitAttribute(104857600));
+
+            // ----------- AUDIO ENDPOINT -----------
             app.MapPost("/api/video/timestamp", AddTimestamp)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600));
@@ -94,6 +99,65 @@ namespace FFmpeg.API.Endpoints
             }
         }
 
+        private static async Task<IResult> ReplaceAudio(
+            HttpContext context,
+            [FromForm] ReplaceAudioDto dto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+            try
+            {
+                if (dto.VideoFile == null || dto.NewAudioFile == null)
+                {
+                    return Results.BadRequest("Both video file and new audio file are required.");
+                }
+
+                string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
+                string audioFileName = await fileService.SaveUploadedFileAsync(dto.NewAudioFile);
+                string extension = Path.GetExtension(dto.VideoFile.FileName);
+                string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
+
+                List<string> filesToCleanup = new List<string> { videoFileName, audioFileName, outputFileName };
+
+                try
+                {
+                    var command = ffmpegService.CreateReplaceAudioCommand();
+                    var result = await command.ExecuteAsync(new ReplaceAudioModel
+                    {
+                        VideoFile = videoFileName,
+                        NewAudioFile = audioFileName,
+                        OutputFile = outputFileName
+                    });
+
+                    if (!result.IsSuccess)
+                    {
+                        logger.LogError("FFmpeg command failed: {ErrorMessage}, Command: {Command}",
+                            result.ErrorMessage, result.CommandExecuted);
+                        return Results.Problem("Failed to replace audio: " + result.ErrorMessage, statusCode: 500);
+                    }
+
+                    byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+
+                    return Results.File(fileBytes, "video/mp4", dto.VideoFile.FileName);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error processing replace-audio request");
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in ReplaceAudio endpoint");
+                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
+            }
+        }
+
+        // ---------- AUDIO ----------
         private static async Task<IResult> ConvertAudio(
             HttpContext context,
             [FromForm] ConvertAudioDto dto)
