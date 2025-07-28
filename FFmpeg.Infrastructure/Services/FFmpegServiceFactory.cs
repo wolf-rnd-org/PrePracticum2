@@ -17,6 +17,7 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<ReplaceAudioModel> CreateReplaceAudioCommand();
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
+        ICommand<BorderModel> CreateBorderCommand();
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -50,6 +51,10 @@ namespace FFmpeg.Infrastructure.Services
         public ICommand<ConvertAudioModel> CreateConvertAudioCommand()
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
+        }
+        public ICommand<BorderModel> CreateBorderCommand()
+        {
+            return new BorderCommand(_executor, _commandBuilder);
         }
     }
 }
