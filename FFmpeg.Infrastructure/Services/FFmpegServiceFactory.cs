@@ -17,10 +17,7 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<ReplaceAudioModel> CreateReplaceAudioCommand();
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
-
         ICommand<ConvertAudioModel> CreateGifCommand(); 
-        
-
         ICommand<AudioMixModel> CreateMixAudioCommand();
 
     }
