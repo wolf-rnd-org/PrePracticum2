@@ -21,9 +21,10 @@ namespace FFmpeg.API.Endpoints
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
 
+            const int MaxUploadSize = 104857600;
             app.MapPost("api/video/thumbnail", CreateThumbnail)
                 .DisableAntiforgery()
-                .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize)); // 100 MB
         }
 
         private static async Task<IResult> AddWatermark(
