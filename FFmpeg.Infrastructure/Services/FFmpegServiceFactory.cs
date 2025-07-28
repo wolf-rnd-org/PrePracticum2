@@ -17,6 +17,7 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<ReplaceAudioModel> CreateReplaceAudioCommand();
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
+        ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand();
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -51,5 +52,10 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
         }
+        public ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand() 
+        { 
+            return new BrightnessContrastCommand(_executor, _commandBuilder);
+        }
+
     }
 }
