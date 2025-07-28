@@ -1,6 +1,6 @@
 ﻿namespace FFmpeg.API
 {
-    public static class Helper
+    public static class 
     {
         private static string GetOutputExtension(string format)
         {
