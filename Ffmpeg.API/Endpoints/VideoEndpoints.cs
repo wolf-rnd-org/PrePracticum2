@@ -15,6 +15,8 @@ namespace FFmpeg.API.Endpoints
 {
     public static class VideoEndpoints
     {
+        const int MaxUploadSize = 104857600;
+
         public static void MapEndpoints(this WebApplication app)
         {
             app.MapPost("/api/video/watermark", AddWatermark)
@@ -23,7 +25,8 @@ namespace FFmpeg.API.Endpoints
 
             app.MapPost("/api/video/mergevideos", MergeVideos)
                 .DisableAntiforgery()
-                .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize)); // 100 MB
+
 
         }
 
@@ -100,7 +103,6 @@ namespace FFmpeg.API.Endpoints
             }
 
         }
-
         private static async Task<IResult> MergeVideos(
                       HttpContext context,
                       [FromForm] MergeVideosDto dto)
@@ -108,13 +110,11 @@ namespace FFmpeg.API.Endpoints
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
             var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-
             try
             {
                 // ולידציה בסיסית
                 if (dto.InputFile1 == null || dto.InputFile2 == null)
                     return Results.BadRequest("Both input video files are required.");
-
                 // שמירת קבצים זמניים
                 string input1 = await fileService.SaveUploadedFileAsync(dto.InputFile1);
                 string input2 = await fileService.SaveUploadedFileAsync(dto.InputFile2);
@@ -122,7 +122,6 @@ namespace FFmpeg.API.Endpoints
                 string output = await fileService.GenerateUniqueFileNameAsync(extension);
 
                 List<string> filesToCleanup = new() { input1, input2, output };
-
                 // בניית מודל ושליחת הפקודה
                 var command = ffmpegService.CreateMergeVideosCommand();
                 var result = await command.ExecuteAsync(new MergeVideosModel
@@ -132,21 +131,16 @@ namespace FFmpeg.API.Endpoints
                     OutputFile = output,
                     Direction = dto.Direction
                 });
-
-
                 if (!result.IsSuccess)
                 {
                     logger.LogError("MergeVideos failed: {Error}, Command: {Command}",
                         result.ErrorMessage, result.CommandExecuted);
                     return Results.Problem("Failed to merge videos: " + result.ErrorMessage, statusCode: 500);
                 }
-
                 // קריאת הקובץ הסופי
                 var fileBytes = await fileService.GetOutputFileAsync(output);
-
                 // ניקוי קבצים זמניים
                 _ = fileService.CleanupTempFilesAsync(filesToCleanup);
-
                 // החזרת קובץ למשתמש
                 return Results.File(fileBytes, "video/mp4", "merged_" + dto.InputFile1.FileName);
             }
