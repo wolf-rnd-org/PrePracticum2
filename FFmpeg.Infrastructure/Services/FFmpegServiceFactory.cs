@@ -1,4 +1,4 @@
-﻿using Ffmpeg.Command;
+using Ffmpeg.Command;
 using Ffmpeg.Command.Commands;
 using FFmpeg.Core.Models;
 using FFmpeg.Infrastructure.Commands;
@@ -16,8 +16,13 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<WatermarkModel> CreateWatermarkCommand();
         ICommand<ReplaceAudioModel> CreateReplaceAudioCommand();
         ICommand<TimestampModel> CreateTimestampCommand();
+<<<<<<< HEAD
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
         ICommand<ResizeModel> CreateResizeCommand();
+=======
+        ICommand<ResizeModel> CreateResizeCommand();
+        
+>>>>>>> 6f0f36ff4ab9737d72ab483398e4f6ef7cf4d291
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -48,9 +53,16 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new TimestampCommand(_executor, _commandBuilder);
         }
+<<<<<<< HEAD
         public ICommand<ConvertAudioModel> CreateConvertAudioCommand()
+=======
+
+
+        public ICommand<ResizeModel> CreateResizeCommand()
+>>>>>>> 6f0f36ff4ab9737d72ab483398e4f6ef7cf4d291
         {
-            return new ConvertAudioCommand(_executor, _commandBuilder);
+            return new ResizeCommand(_executor, _commandBuilder);
+
         }
         public ICommand<ResizeModel> CreateResizeCommand()
         {

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -17,10 +17,15 @@ namespace FFmpeg.API.Endpoints
     {
         public static void MapEndpoints(this WebApplication app)
         {
+<<<<<<< HEAD
+=======
+            
+>>>>>>> 6f0f36ff4ab9737d72ab483398e4f6ef7cf4d291
             app.MapPost("/api/video/watermark", AddWatermark)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
 
+<<<<<<< HEAD
             app.MapPost("/api/video/replace-audio", ReplaceAudio)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600));
@@ -40,6 +45,15 @@ namespace FFmpeg.API.Endpoints
                 .Accepts<ConvertAudioDto>("multipart/form-data");
         }
 
+=======
+            app.MapPost("/api/video/resize", ChangeResolution)
+    .DisableAntiforgery()
+    .WithMetadata(new RequestSizeLimitAttribute(104857600));
+
+        }
+
+        
+>>>>>>> 6f0f36ff4ab9737d72ab483398e4f6ef7cf4d291
         private static async Task<IResult> AddWatermark(
             HttpContext context,
             [FromForm] WatermarkDto dto)
@@ -103,6 +117,7 @@ namespace FFmpeg.API.Endpoints
             }
         }
 
+<<<<<<< HEAD
         private static async Task<IResult> ReplaceAudio(
             HttpContext context,
             [FromForm] ReplaceAudioDto dto)
@@ -227,6 +242,8 @@ namespace FFmpeg.API.Endpoints
         }
 
         // ---------- AUDIO ----------
+=======
+>>>>>>> 6f0f36ff4ab9737d72ab483398e4f6ef7cf4d291
         private static async Task<IResult> ConvertAudio(
             HttpContext context,
             [FromForm] ConvertAudioDto dto)
@@ -276,10 +293,16 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("Unexpected error: " + ex.Message);
             }
         }
+<<<<<<< HEAD
 
         private static async Task<IResult> AddTimestamp(
             HttpContext context,
             [FromForm] TimestampDto dto)
+=======
+        private static async Task<IResult> ChangeResolution(
+    HttpContext context,
+    [FromForm] ResizeDto dto)
+>>>>>>> 6f0f36ff4ab9737d72ab483398e4f6ef7cf4d291
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
@@ -287,6 +310,7 @@ namespace FFmpeg.API.Endpoints
 
             try
             {
+<<<<<<< HEAD
                 if (dto.VideoFile == null)
                 {
                     return Results.BadRequest("Video file is required");
@@ -310,11 +334,39 @@ namespace FFmpeg.API.Endpoints
                         FontSize = dto.FontSize == 0 ? 10 : dto.FontSize,
                         FontColor = string.IsNullOrWhiteSpace(dto.FontColor) ? "white" : dto.FontColor,
                         IsVideo = true,
+=======
+                if (dto.InputFile == null || dto.Width <= 0 || dto.Height <= 0)
+                {
+                    return Results.BadRequest("Video file and valid resolution (Width and Height) are required.");
+                }
+
+                // Save the uploaded video
+                string inputFilePath = await fileService.SaveUploadedFileAsync(dto.InputFile);
+
+                // Determine output file path
+                string outputFileName = string.IsNullOrWhiteSpace(dto.OutputFile)
+                ? await fileService.GenerateUniqueFileNameAsync(".mp4")
+                : Path.HasExtension(dto.OutputFile) ? dto.OutputFile : dto.OutputFile + ".mp4";
+                
+                var filesToCleanup = new List<string> { inputFilePath, outputFileName };
+
+                try
+                {
+                    // Create and execute FFmpeg resize command
+                    var command = ffmpegService.CreateResizeCommand(); // Must return IFFmpegResizeCommand
+                    var result = await command.ExecuteAsync(new ResizeModel
+                    {
+                        InputFile = inputFilePath,
+                        OutputFile = outputFileName,
+                        Width = dto.Width,
+                        Height = dto.Height,
+>>>>>>> 6f0f36ff4ab9737d72ab483398e4f6ef7cf4d291
                         VideoCodec = "libx264"
                     });
 
                     if (!result.IsSuccess)
                     {
+<<<<<<< HEAD
                         logger.LogError("FFmpeg timestamp command failed: {ErrorMessage}, Command: {Command}",
                             result.ErrorMessage, result.CommandExecuted);
                         return Results.Problem("Failed to add timestamp: " + result.ErrorMessage, statusCode: 500);
@@ -328,16 +380,41 @@ namespace FFmpeg.API.Endpoints
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "Error processing timestamp request");
+=======
+                        logger.LogError("FFmpeg resize failed: {ErrorMessage}. Command: {CommandExecuted}",
+                            result.ErrorMessage, result.CommandExecuted);
+                        return Results.Problem("Failed to resize video: " + result.ErrorMessage, statusCode: 500);
+                    }
+
+                    byte[] outputBytes = await fileService.GetOutputFileAsync(outputFileName);
+
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+
+                    return Results.File(outputBytes, "video/mp4", Path.GetFileName(outputFileName));
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error executing FFmpeg resize command");
+>>>>>>> 6f0f36ff4ab9737d72ab483398e4f6ef7cf4d291
                     _ = fileService.CleanupTempFilesAsync(filesToCleanup);
                     throw;
                 }
             }
             catch (Exception ex)
             {
+<<<<<<< HEAD
                 logger.LogError(ex, "Error in AddTimestamp endpoint");
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
+=======
+                logger.LogError(ex, "Unhandled error in ChangeResolution endpoint");
+                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
+            }
+        }
+
+
+>>>>>>> 6f0f36ff4ab9737d72ab483398e4f6ef7cf4d291
     }
 }
 
