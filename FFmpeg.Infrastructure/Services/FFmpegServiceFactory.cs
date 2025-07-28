@@ -53,12 +53,11 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
         }
-<<<<<<< HEAD
+
         public ICommand<GIFModel> CreateGifCommand()
         {
             return new MakeGIFCommand(_executor, _commandBuilder);  
         }
-=======
->>>>>>> master
+
     }
 }
