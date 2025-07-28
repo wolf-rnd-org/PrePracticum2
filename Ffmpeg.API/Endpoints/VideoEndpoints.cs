@@ -27,6 +27,11 @@ namespace FFmpeg.API.Endpoints
                 .DisableAntiforgery()
                 .WithName("ConvertAudio")
                 .Accepts<ConvertAudioDto>("multipart/form-data");
+            //----------CHANGE VIDEO SPEED ENDPONT----------
+            app.MapPost("/api/video/change-speed", ChangeVideoSpeed)
+                .DisableAntiforgery()
+                    .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
+
         }
 
         // ---------- VIDEO ----------
@@ -143,6 +148,58 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("Unexpected error: " + ex.Message);
             }
         }
+        //-------change_video-speed-----
+        private static async Task<IResult> ChangeVideoSpeed(
+    HttpContext context,
+    [FromForm] ChangeSpeedDto dto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+            if (dto.VideoFile == null)
+            {
+                return Results.BadRequest("Video file is required");
+            }
+
+            string inputFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
+            string extension = Path.GetExtension(dto.OutputFileName);
+            if (string.IsNullOrEmpty(extension))
+            {
+                return Results.BadRequest("Output file name must include extension (e.g., .mp4)");
+            }
+
+            string outputFileName = dto.OutputFileName;
+            List<string> filesToCleanup = new() { inputFileName, outputFileName };
+
+            try
+            {
+                var command = ffmpegService.CreateChangeSpeedCommand();
+                var result = await command.ExecuteAsync(new SpeedChangeModel
+                {
+                    InputFile = inputFileName,
+                    SpeedFactor = dto.SpeedFactor,
+                    OutputFile = outputFileName
+                });
+
+                if (!result.IsSuccess)
+                {
+                    logger.LogError("Speed change failed: {Error}", result.ErrorMessage);
+                    return Results.Problem("Speed change failed: " + result.ErrorMessage);
+                }
+
+                byte[] output = await fileService.GetOutputFileAsync(outputFileName);
+                _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                return Results.File(output, "video/mp4", outputFileName);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error changing video speed");
+                _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                return Results.Problem("Unexpected error: " + ex.Message);
+            }
+        }
+
     }
 }
 

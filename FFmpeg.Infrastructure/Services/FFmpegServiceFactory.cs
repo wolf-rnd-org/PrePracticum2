@@ -16,6 +16,7 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<WatermarkModel> CreateWatermarkCommand();
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
+        ICommand<SpeedChangeModel> CreateChangeSpeedCommand(); // הוספת שיטה חדשה
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -48,6 +49,11 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
         }
+        public ICommand<SpeedChangeModel> CreateChangeSpeedCommand() // מימוש השיטה החדשה
+        {
+            return new SpeedChangeCommand(_executor, _commandBuilder);
+        }
+
 
     }
 }
