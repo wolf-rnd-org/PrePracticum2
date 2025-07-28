@@ -16,6 +16,8 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<WatermarkModel> CreateWatermarkCommand();
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
+        ICommand<ConvertAudioModel> CreateGifCommand(); 
+        
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -48,6 +50,9 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
         }
-
+        public ICommand<GIFModel> CreateGifCommand()
+        {
+            return new MakeGIFCommand(_executor, _commandBuilder);  
+        }
     }
 }
