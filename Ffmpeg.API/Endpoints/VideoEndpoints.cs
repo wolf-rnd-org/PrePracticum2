@@ -25,15 +25,11 @@ namespace FFmpeg.API.Endpoints
             const int MaxUploadSize = 104857600;
             app.MapPost("api/video/thumbnail", CreateThumbnail)
                 .DisableAntiforgery()
-<<<<<<< HEAD
                 .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
-=======
-                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize)); // 100 MB
        
             app.MapPost("/api/video/replace-audio", ReplaceAudio)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600));
->>>>>>> b1c828053f46d5eede447e9933e9f1a2c97ddffd
 
             // ----------- AUDIO ENDPOINT -----------
             app.MapPost("/api/video/timestamp", AddTimestamp)
