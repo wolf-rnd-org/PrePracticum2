@@ -10,29 +10,29 @@ using FFmpeg.Core.Interfaces;
 using FFmpeg.Core.Models;
 using FFmpeg.Infrastructure.Services;
 using Microsoft.Extensions.Logging;
-
 namespace FFmpeg.API.Endpoints
 {
     public static class VideoEndpoints
     {
+        private const int MaxUploadSize = 104857600; // 100 MB
         public static void MapEndpoints(this WebApplication app)
         {
             app.MapPost("/api/video/watermark", AddWatermark)
                 .DisableAntiforgery()
-                .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize)); // 100 MB
 
             app.MapPost("/api/video/animated-text", AddAnimatedText)
                 .DisableAntiforgery()
-                .WithMetadata(new RequestSizeLimitAttribute(104857600));
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
 
 
             app.MapPost("/api/video/replace-audio", ReplaceAudio)
                 .DisableAntiforgery()
-                .WithMetadata(new RequestSizeLimitAttribute(104857600));
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
 
             app.MapPost("/api/video/timestamp", AddTimestamp)
                 .DisableAntiforgery()
-                .WithMetadata(new RequestSizeLimitAttribute(104857600));
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
 
             app.MapPost("/api/audio/convert", ConvertAudio)
                 .DisableAntiforgery()
