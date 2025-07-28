@@ -25,8 +25,12 @@ namespace FFmpeg.API.Endpoints
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600));
 
-            // ----------- AUDIO ENDPOINT -----------
             app.MapPost("/api/video/timestamp", AddTimestamp)
+                .DisableAntiforgery()
+                .WithMetadata(new RequestSizeLimitAttribute(104857600));
+
+            // NEW ENDPOINT - Extract Frame from Video
+            app.MapPost("/api/video/extract-frame", ExtractFrame)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600));
 
@@ -34,6 +38,97 @@ namespace FFmpeg.API.Endpoints
                 .DisableAntiforgery()
                 .WithName("ConvertAudio")
                 .Accepts<ConvertAudioDto>("multipart/form-data");
+        }
+
+        // NEW METHOD - Extract Frame from Video
+        private static async Task<IResult> ExtractFrame(
+            HttpContext context,
+            [FromForm] VideoFrameExtractDto dto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+            try
+            {
+                if (dto.VideoFile == null)
+                {
+                    return Results.BadRequest("Video file is required");
+                }
+
+                if (string.IsNullOrEmpty(dto.OutputImageName))
+                {
+                    return Results.BadRequest("Output image name is required");
+                }
+
+                if (string.IsNullOrEmpty(dto.TimePosition))
+                {
+                    return Results.BadRequest("Time position is required (format: HH:MM:SS)");
+                }
+
+                string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
+                string outputImageName = dto.OutputImageName;
+
+                // Ensure the output has proper extension
+                if (!outputImageName.EndsWith(".png") && !outputImageName.EndsWith(".jpg") && !outputImageName.EndsWith(".jpeg"))
+                {
+                    outputImageName += ".png"; // Default to PNG if no extension
+                }
+
+                List<string> filesToCleanup = new() { videoFileName, outputImageName };
+
+                try
+                {
+                    var command = ffmpegService.CreateVideoFrameExtractCommand();
+                    var result = await command.ExecuteAsync(new VideoFrameExtractModel
+                    {
+                        InputFile = videoFileName,
+                        OutputFile = outputImageName,
+                        TimePosition = dto.TimePosition,
+                        ImageFormat = Path.GetExtension(outputImageName).TrimStart('.')
+                    });
+
+                    if (!result.IsSuccess)
+                    {
+                        logger.LogError("FFmpeg frame extract command failed: {ErrorMessage}, Command: {Command}",
+                            result.ErrorMessage, result.CommandExecuted);
+                        return Results.Problem("Failed to extract frame: " + result.ErrorMessage, statusCode: 500);
+                    }
+
+                    byte[] imageBytes = await fileService.GetOutputFileAsync(outputImageName);
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+
+                    // Determine content type based on file extension
+                    string contentType = GetImageContentType(outputImageName);
+
+                    return Results.File(imageBytes, contentType, outputImageName);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error processing frame extraction request");
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in ExtractFrame endpoint");
+                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
+            }
+        }
+
+        private static string GetImageContentType(string fileName)
+        {
+            string extension = Path.GetExtension(fileName).ToLowerInvariant();
+            return extension switch
+            {
+                ".png" => "image/png",
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".gif" => "image/gif",
+                ".bmp" => "image/bmp",
+                ".tiff" => "image/tiff",
+                _ => "image/png" // Default to PNG
+            };
         }
 
         private static async Task<IResult> AddWatermark(
@@ -271,4 +366,3 @@ namespace FFmpeg.API.Endpoints
         }
     }
 }
-

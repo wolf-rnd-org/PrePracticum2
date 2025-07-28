@@ -1,8 +1,12 @@
 ﻿using FFmpeg.API.DTOs;
+using FFmpeg.Core.Interfaces;
+using FFmpeg.Core.Models;
+using FFmpeg.Infrastructure.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace FFmpeg.API.Endpoints
 {
-    public class AudioEndPoints
+    public static class AudioEndPoints
     {
         public static void MapAudioEndpoints(this WebApplication app)
         {
@@ -31,6 +35,7 @@ namespace FFmpeg.API.Endpoints
 
                 try
                 {
+                    // NOTE: This needs to be implemented in the factory
                     var command = ffmpegService.CreateMixAudioCommand();
                     var result = await command.ExecuteAsync(new AudioMixModel
                     {

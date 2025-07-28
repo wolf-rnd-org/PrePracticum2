@@ -8,9 +8,9 @@ namespace FFmpeg.Core.Models
 {
     public class GIFModel
     {
-        public string InputVideoName { get; set; }
-        public string OutputVideoName { get; set; }
-        public bool IsVideo { get; set; }
+        public string InputFile { get; set; } = string.Empty; // הוספתי את הנכס החסר
+        public string OutputGifName { get; set; } = string.Empty; // הוספתי את הנכס החסר
+        public bool IsVideo { get; set; } = true;
         public string VideoCodec { get; set; } = "libx264";
     }
 }

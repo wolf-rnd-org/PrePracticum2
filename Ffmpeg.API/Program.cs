@@ -54,8 +54,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
-app.MapEndpoints();
+
+// Map all endpoints
+app.MapEndpoints(); // Video endpoints
+app.MapAudioEndpoints(); // Audio endpoints - הוספתי את זה
 
 app.MapGet("/", () => { return "FFmpeg API is running"; });
 app.Run();
-
