@@ -4,6 +4,5 @@
     {
         public IFormFile VideoFile { get; set; }
         public string OutputFileName { get; set; }
-
     }
 }
