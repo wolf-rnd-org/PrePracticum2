@@ -104,8 +104,8 @@ namespace FFmpeg.API.Endpoints
             }
         }
         private static async Task<IResult> ReplaceGreenScreen(
-            HttpContext context,
-            [FromForm] GreenScreenDto dto)
+                HttpContext context,
+                [FromForm] GreenScreenDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
@@ -221,6 +221,7 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
+
 
         // ---------- AUDIO ----------
         private static async Task<IResult> ConvertAudio(
