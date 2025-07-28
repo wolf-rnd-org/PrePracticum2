@@ -4,7 +4,5 @@
     {
         public IFormFile VideoFile { get; set; }
         public int DuplicateCount { get; set; } = 2;
-
-
     }
 }
