@@ -1,8 +1,12 @@
 ﻿using FFmpeg.API.DTOs;
+using FFmpeg.Core.Interfaces;
+using FFmpeg.Core.Models;
+using FFmpeg.Infrastructure.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace FFmpeg.API.Endpoints
 {
-    public class AudioEndPoints
+    public static class AudioEndPoints
     {
         public static void MapAudioEndpoints(this WebApplication app)
         {
@@ -10,6 +14,7 @@ namespace FFmpeg.API.Endpoints
             .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600));
         }
+
         private static async Task<IResult> MixAudio(HttpContext context, [FromForm] AudioMixDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
@@ -34,9 +39,9 @@ namespace FFmpeg.API.Endpoints
                     var command = ffmpegService.CreateMixAudioCommand();
                     var result = await command.ExecuteAsync(new AudioMixModel
                     {
-                        InputFile1 = fileService.GetFullInputPath(file1),
-                        InputFile2 = fileService.GetFullInputPath(file2),
-                        OutputFile = fileService.GetFullOutputPath(outputFile)
+                        InputFile1 = file1,
+                        InputFile2 = file2,
+                        OutputFile = outputFile
                     });
 
                     if (!result.IsSuccess)

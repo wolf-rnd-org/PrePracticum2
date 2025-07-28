@@ -19,14 +19,17 @@ namespace FFmpeg.API.Endpoints
         {
             app.MapPost("/api/video/watermark", AddWatermark)
                 .DisableAntiforgery()
-                .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
+                .WithMetadata(new RequestSizeLimitAttribute(104857600)); 
 
             app.MapPost("/api/video/replace-audio", ReplaceAudio)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600));
 
-            // ----------- AUDIO ENDPOINT -----------
             app.MapPost("/api/video/timestamp", AddTimestamp)
+                .DisableAntiforgery()
+                .WithMetadata(new RequestSizeLimitAttribute(104857600));
+
+            app.MapPost("/api/video/convert", ConvertVideo) // הוספה חדשה
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600));
 
@@ -157,7 +160,69 @@ namespace FFmpeg.API.Endpoints
             }
         }
 
-        // ---------- AUDIO ----------
+        private static async Task<IResult> ConvertVideo(
+            HttpContext context,
+            [FromForm] ConvertVideoDto dto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+            try
+            {
+                if (dto.VideoFile == null || string.IsNullOrEmpty(dto.OutputFileName))
+                {
+                    return Results.BadRequest("Video file and output file name are required");
+                }
+
+                string inputFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
+                string extension = Path.GetExtension(dto.OutputFileName);
+                if (string.IsNullOrEmpty(extension))
+                {
+                    return Results.BadRequest("Output file name must include extension (e.g., .avi, .mkv, .mov)");
+                }
+
+                string outputFileName = dto.OutputFileName;
+                List<string> filesToCleanup = new() { inputFileName, outputFileName };
+
+                try
+                {
+                    var command = ffmpegService.CreateConvertVideoCommand();
+                    var result = await command.ExecuteAsync(new ConvertVideoModel
+                    {
+                        InputFile = inputFileName,
+                        OutputFile = outputFileName,
+                        VideoCodec = dto.VideoCodec,
+                        AudioCodec = dto.AudioCodec
+                    });
+
+                    if (!result.IsSuccess)
+                    {
+                        logger.LogError("Video conversion failed: {ErrorMessage}, Command: {Command}",
+                            result.ErrorMessage, result.CommandExecuted);
+                        return Results.Problem("Video conversion failed: " + result.ErrorMessage, statusCode: 500);
+                    }
+
+                    byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+
+                    string contentType = GetContentType(extension);
+                    return Results.File(fileBytes, contentType, outputFileName);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error processing video conversion request");
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in ConvertVideo endpoint");
+                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
+            }
+        }
+
         private static async Task<IResult> ConvertAudio(
             HttpContext context,
             [FromForm] ConvertAudioDto dto)
@@ -269,6 +334,21 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
+
+        private static string GetContentType(string extension)
+        {
+            return extension.ToLowerInvariant() switch
+            {
+                ".mp4" => "video/mp4",
+                ".avi" => "video/x-msvideo",
+                ".mkv" => "video/x-matroska",
+                ".mov" => "video/quicktime",
+                ".webm" => "video/webm",
+                ".wmv" => "video/x-ms-wmv",
+                ".flv" => "video/x-flv",
+                ".3gp" => "video/3gpp",
+                _ => "video/mp4" 
+            };
+        }
     }
 }
-

@@ -17,6 +17,8 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<ReplaceAudioModel> CreateReplaceAudioCommand();
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
+        ICommand<ConvertVideoModel> CreateConvertVideoCommand();
+        ICommand<AudioMixModel> CreateMixAudioCommand();
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -39,17 +41,30 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new WatermarkCommand(_executor, _commandBuilder);
         }
+
         public ICommand<ReplaceAudioModel> CreateReplaceAudioCommand()
         {
             return new ReplaceAudioCommand(_executor, _commandBuilder);
         }
+
         public ICommand<TimestampModel> CreateTimestampCommand()
         {
             return new TimestampCommand(_executor, _commandBuilder);
         }
+
         public ICommand<ConvertAudioModel> CreateConvertAudioCommand()
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
+        }
+
+        public ICommand<ConvertVideoModel> CreateConvertVideoCommand()
+        {
+            return new ConvertVideoCommand(_executor, _commandBuilder);
+        }
+
+        public ICommand<AudioMixModel> CreateMixAudioCommand()
+        {
+            return new MixAudioCommand(_executor, _commandBuilder, (ILogger)null);
         }
     }
 }
