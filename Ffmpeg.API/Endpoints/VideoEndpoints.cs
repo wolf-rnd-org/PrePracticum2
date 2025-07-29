@@ -23,6 +23,11 @@ namespace FFmpeg.API.Endpoints
             app.MapPost("/api/video/watermark", AddWatermark)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
+            
+            const int MaxUploadSize = 104857600;
+            app.MapPost("api/video/thumbnail", CreateThumbnail)
+                .DisableAntiforgery()
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
 
             app.MapPost("/api/video/colorfilter", ApplyColorFilter)
                 .DisableAntiforgery()
@@ -32,12 +37,7 @@ namespace FFmpeg.API.Endpoints
             app.MapPost("/api/video/replace-audio", ReplaceAudio)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600));
-          
-            const int MaxUploadSize = 104857600;
-            app.MapPost("api/video/thumbnail", CreateThumbnail)
-                .DisableAntiforgery()
-                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
-       
+                 
             // ----------- AUDIO ENDPOINT -----------
             app.MapPost("/api/video/timestamp", AddTimestamp)
                 .DisableAntiforgery()
