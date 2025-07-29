@@ -11,6 +11,10 @@ namespace FFmpeg.Infrastructure.Commands
     public class BlurEffectComand(FFmpegExecutor executor, ICommandBuilder commandBuilder) : BaseCommand(executor), ICommand<BlurEffectModel>
     {
         private readonly ICommandBuilder _commandBuilder = commandBuilder ?? throw new ArgumentNullException(nameof(commandBuilder));
+<<<<<<< HEAD
+=======
+
+>>>>>>> 8123c5ffbc441a5304c1804bfbcc1d11e2a7ac1d
         public Task<CommandResult> ExecuteAsync(BlurEffectModel model)
         {
             CommandBuilder = _commandBuilder.SetInput(model.VideoName)
