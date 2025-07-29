@@ -29,8 +29,4 @@ namespace FFmpeg.Infrastructure.Commands
             return await RunAsync();
         }
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> master

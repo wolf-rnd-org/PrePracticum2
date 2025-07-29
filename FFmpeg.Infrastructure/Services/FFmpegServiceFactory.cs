@@ -51,24 +51,13 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new TimestampCommand(_executor, _commandBuilder);
         }
-<<<<<<< HEAD
-
-
         public ICommand<BitrateLimitingModel> CreateBitrateLimitingCommand()
         {
             return new BitrateLimitingCommand(_executor, _commandBuilder);
         }
-
-=======
->>>>>>> master
         public ICommand<ConvertAudioModel> CreateConvertAudioCommand()
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
         }
-<<<<<<< HEAD
-
-
-=======
->>>>>>> master
     }
 }
