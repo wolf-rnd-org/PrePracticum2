@@ -14,8 +14,11 @@ namespace FFmpeg.Infrastructure.Services
     public interface IFFmpegServiceFactory
     {
         ICommand<WatermarkModel> CreateWatermarkCommand();
+        ICommand<ReplaceAudioModel> CreateReplaceAudioCommand();
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
+        ICommand<ColorFilterModel> CreateColorFilterCommand(); 
+        ICommand<AudioMixModel> CreateMixAudioCommand();
         ICommand<RotateVideoModel> CreateRotateVideoCommand();
     }
 
@@ -39,15 +42,25 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new WatermarkCommand(_executor, _commandBuilder);
         }
-
+        public ICommand<ReplaceAudioModel> CreateReplaceAudioCommand()
+        {
+            return new ReplaceAudioCommand(_executor, _commandBuilder);
+        }
         public ICommand<TimestampModel> CreateTimestampCommand()
         {
             return new TimestampCommand(_executor, _commandBuilder);
         }
-
         public ICommand<ConvertAudioModel> CreateConvertAudioCommand()
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
+        }
+        public ICommand<ColorFilterModel> CreateColorFilterCommand()
+        {
+            return new ColorFilterCommand(_executor, _commandBuilder);
+        }
+        public ICommand<AudioMixModel> CreateMixAudioCommand()
+        {
+            return new MixAudioCommand(_executor, _commandBuilder, new Logger());
         }
 
         public ICommand<RotateVideoModel> CreateRotateVideoCommand()

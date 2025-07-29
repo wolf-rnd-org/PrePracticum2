@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.13.35806.99
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FFmpeg.API", "FFmpeg.API\FFmpeg.API.csproj", "{AB76771F-272A-469C-A69A-F0F8D0F83C1A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FFmpeg.API", "Ffmpeg.API\FFmpeg.API.csproj", "{AB76771F-272A-469C-A69A-F0F8D0F83C1A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FFmpeg.Infrastructure", "FFmpeg.Infrastructure\FFmpeg.Infrastructure.csproj", "{8E3619D0-AE4F-5EAD-011E-53D189B3AD91}"
 EndProject
