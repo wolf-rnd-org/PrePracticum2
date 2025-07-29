@@ -33,13 +33,10 @@ namespace FFmpeg.Infrastructure.Services
             _executor = new FFmpegExecutor(ffmpegPath, logOutput, logger);
             _commandBuilder = new CommandBuilder(configuration);
         }
-
         public ICommand<WatermarkModel> CreateWatermarkCommand()
         {
             return new WatermarkCommand(_executor, _commandBuilder);
         }
-
-    
         public ICommand<BlurEffectModel> CreateBlurEffectCommand()
         {
             return new BlurEffectComand(_executor, _commandBuilder);

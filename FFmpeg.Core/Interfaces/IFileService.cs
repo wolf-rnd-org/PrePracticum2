@@ -11,6 +11,5 @@ namespace FFmpeg.Core.Interfaces
         Task<byte[]> GetOutputFileAsync(string fileName);
         Task CleanupTempFilesAsync(IEnumerable<string> fileNames);
         Task<string> GenerateUniqueFileNameAsync(string extension);
-   
     }
 }
