@@ -7,15 +7,9 @@ using System.Threading.Tasks;
 
 namespace FFmpeg.Core.Models
 {
-<<<<<<< HEAD
-<<<<<<< HEAD
+
     public class BlurEffectModel
-=======
-      public class BlurEffectModel
->>>>>>> 8123c5ffbc441a5304c1804bfbcc1d11e2a7ac1d
-=======
-    public class BlurEffectModel
->>>>>>> a0db67b507baf769d9f2be5f8116ff8947a0549d
+
     {
         [Required]
         public string VideoName { get; set; } = string.Empty;
