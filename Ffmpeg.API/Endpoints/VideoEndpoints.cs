@@ -278,9 +278,9 @@ namespace FFmpeg.API.Endpoints
             }
         }
 
-        private static async Task<IResult> AddTimestamp(
-            HttpContext context,
-            [FromForm] TimestampDto dto)
+        private static async Task<IResult> AddBlurEffect(
+HttpContext context,
+[FromForm] BlurEffectDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
@@ -292,12 +292,61 @@ namespace FFmpeg.API.Endpoints
                 {
                     return Results.BadRequest("Video file is required");
                 }
-
                 string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
                 string extension = Path.GetExtension(dto.VideoFile.FileName);
                 string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
+                List<string> filesToCleanup = new List<string> { videoFileName, outputFileName };
+                try
+                {
+                    var command = ffmpegService.CreateBlurEffectCommand();
+                    var result = await command.ExecuteAsync(new BlurEffectModel
+                    {
+                        VideoName = videoFileName,
+                        OutputName = outputFileName,
+                        Sigma = dto.Sigma // Passed from the form
+                    });
+                    if (!result.IsSuccess)
+                    {
+                        logger.LogError("FFmpeg command failed: {ErrorMessage}, Command: {Command}",
+                        result.ErrorMessage, result.CommandExecuted);
+                        return Results.Problem("Failed to apply blur effect: " + result.ErrorMessage, statusCode: 500);
+                    }
+                    byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    return Results.File(fileBytes, "video/mp4", dto.VideoFile.FileName);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error processing blur effect request");
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in ApplyBlurEffect endpoint");
+                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
+            }
+        }
 
-                List<string> filesToCleanup = new() { videoFileName, outputFileName };
+
+        private static async Task<IResult> AddTimestamp(
+        HttpContext context,
+        [FromForm] TimestampDto dto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+            try
+            {
+                if (dto.VideoFile == null)
+                {
+                    return Results.BadRequest("Video file is required");
+                }
+                string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
+                string extension = Path.GetExtension(dto.VideoFile.FileName);
+                string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
+                List<string> filesToCleanup = new List<string> { videoFileName, outputFileName };
 
                 try
                 {
@@ -313,7 +362,6 @@ namespace FFmpeg.API.Endpoints
                         IsVideo = true,
                         VideoCodec = "libx264"
                     });
-
                     if (!result.IsSuccess)
                     {
                         logger.LogError("FFmpeg timestamp command failed: {ErrorMessage}, Command: {Command}",
@@ -323,7 +371,6 @@ namespace FFmpeg.API.Endpoints
 
                     byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
                     _ = fileService.CleanupTempFilesAsync(filesToCleanup);
-
                     return Results.File(fileBytes, "video/mp4", dto.VideoFile.FileName);
                 }
                 catch (Exception ex)
@@ -333,80 +380,13 @@ namespace FFmpeg.API.Endpoints
                     throw;
                 }
             }
+
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error in AddTimestamp endpoint");
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-        private static async Task<IResult> AddBlurEffect(
-    HttpContext context,
-    [FromForm] BlurEffectDto dto)
-        {
-            var fileService = context.RequestServices.GetRequiredService<IFileService>();
-            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
-            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-
-            try
-            {
-                // Validate request
-                if (dto.VideoFile == null)
-                {
-                    return Results.BadRequest("Video file is required");
-                }
-
-                // Save uploaded file
-                string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
-
-                // Generate output filename
-                string extension = Path.GetExtension(dto.VideoFile.FileName);
-                string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
-
-                // Track files to clean up
-                List<string> filesToCleanup = new List<string> { videoFileName, outputFileName };
-
-                try
-                {
-                    // Create and execute the blur effect command
-                    var command = ffmpegService.CreateBlurEffectCommand();
-                    var result = await command.ExecuteAsync(new BlurEffectModel
-                    {
-                        VideoName = videoFileName,
-                        OutputName = outputFileName,
-                        Sigma = dto.Sigma // Passed from the form
-                    });
-
-                    if (!result.IsSuccess)
-                    {
-                        logger.LogError("FFmpeg command failed: {ErrorMessage}, Command: {Command}",
-                            result.ErrorMessage, result.CommandExecuted);
-                        return Results.Problem("Failed to apply blur effect: " + result.ErrorMessage, statusCode: 500);
-                    }
-
-                    // Read the output file
-                    byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
-
-                    // Clean up temporary files
-                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
-
-                    // Return the file
-                    return Results.File(fileBytes, "video/mp4", dto.VideoFile.FileName);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Error processing blur effect request");
-                    // Clean up on error
-                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
-                    throw;
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error in ApplyBlurEffect endpoint");
-                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
-            }
-        }
-
     }
 }
 

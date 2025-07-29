@@ -46,7 +46,6 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new BlurEffectComand(_executor, _commandBuilder);
         }
-
         public ICommand<ReplaceAudioModel> CreateReplaceAudioCommand()
         {
             return new ReplaceAudioCommand(_executor, _commandBuilder);
