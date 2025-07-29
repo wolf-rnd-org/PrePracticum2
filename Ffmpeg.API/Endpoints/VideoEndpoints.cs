@@ -24,14 +24,18 @@ namespace FFmpeg.API.Endpoints
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
 
+            app.MapPost("/api/video/replace-audio", ReplaceAudio)
+                .DisableAntiforgery()
+                .WithMetadata(new RequestSizeLimitAttribute(104857600));
+
+            app.MapPost("/api/video/replace-audio", BitrateLimiting)
+                .DisableAntiforgery()
+                .WithMetadata(new RequestSizeLimitAttribute(104857600));
+
             app.MapPost("/api/video/colorfilter", ApplyColorFilter)
                 .DisableAntiforgery()
                 .WithName("ApplyColorFilter")
                 .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
-
-            app.MapPost("/api/video/replace-audio", ReplaceAudio)
-                .DisableAntiforgery()
-                .WithMetadata(new RequestSizeLimitAttribute(104857600));
 
             // ----------- AUDIO ENDPOINT -----------
             app.MapPost("/api/video/timestamp", AddTimestamp)
@@ -42,6 +46,7 @@ namespace FFmpeg.API.Endpoints
                 .DisableAntiforgery()
                 .WithName("ConvertAudio")
                 .Accepts<ConvertAudioDto>("multipart/form-data");
+
         }
 
         private static async Task<IResult> AddWatermark(
@@ -106,10 +111,9 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-
         private static async Task<IResult> ReplaceAudio(
-            HttpContext context,
-            [FromForm] ReplaceAudioDto dto)
+    HttpContext context,
+    [FromForm] ReplaceAudioDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
@@ -164,6 +168,60 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
+        private static async Task<IResult> BitrateLimiting(HttpContext context, [FromForm] BitrateLimitingDTO bitrateLimitingDto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+            try
+            {
+                if (bitrateLimitingDto.VideoFile == null || bitrateLimitingDto.BitrateLimitingFile == null)
+                {
+                    return Results.BadRequest("Video file and watermark file are required");
+                }
+                string videoFileName = await fileService.SaveUploadedFileAsync(bitrateLimitingDto.VideoFile);
+                string bitrateLimitingFileName = await fileService.SaveUploadedFileAsync(bitrateLimitingDto.BitrateLimitingFile);
+
+                string extension = Path.GetExtension(bitrateLimitingDto.VideoFile.FileName);
+                string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
+
+                List<string> filesToCleanup = new List<string> { videoFileName, bitrateLimitingFileName, outputFileName };
+                try
+                {
+                    var command = ffmpegService.CreateBitrateLimitingCommand();
+                    var result = await command.ExecuteAsync(new BitrateLimitingModel
+                    {
+                        InputFile = videoFileName,
+                        OutputFile = outputFileName,
+                        Bitrate = bitrateLimitingDto.Bitrate
+                    });
+                    if (!result.IsSuccess)
+                    {
+                        logger.LogError("FFmpeg command failed: {ErrorMessage}, Command: {Command}",
+                            result.ErrorMessage, result.CommandExecuted);
+                        return Results.Problem("Failed to bitrate limiting: " + result.ErrorMessage, statusCode: 500);
+                    }
+                    byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
+
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+
+                    return Results.File(fileBytes, "video/mp4", bitrateLimitingDto.VideoFile.FileName);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error processing bitrate limiting request");
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in BitrateLimiting endpoint");
+                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
+            }
+
+        }
 
         // ---------- AUDIO ----------
         private static async Task<IResult> ConvertAudio(
@@ -216,8 +274,8 @@ namespace FFmpeg.API.Endpoints
             }
         }
         private static async Task<IResult> ApplyColorFilter(
-   HttpContext context,
-   [FromForm] ColorFilterDto dto)
+            HttpContext context,
+            [FromForm] ColorFilterDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();

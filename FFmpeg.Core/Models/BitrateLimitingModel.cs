@@ -11,7 +11,8 @@ namespace FFmpeg.Core.Models
         public string InputFile { get; set; }
         public string OutputFile { get; set; }
         public string Bitrate { get; set; } = "1M"; // Default bitrate of 1 Mbps
-        public bool IsVideo { get; set; } = true;
-        public string VideoCodec { get; set; } = "libx264";
     }
 }
+
+
+
