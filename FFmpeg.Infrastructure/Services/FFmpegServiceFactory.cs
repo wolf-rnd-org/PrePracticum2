@@ -5,6 +5,7 @@ using FFmpeg.Infrastructure.Commands;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ namespace FFmpeg.Infrastructure.Services
     public interface IFFmpegServiceFactory
     {
         ICommand<WatermarkModel> CreateWatermarkCommand();
+        ICommand<BlurEffectModel> CreateBlurEffectCommand();
         ICommand<ReplaceAudioModel> CreateReplaceAudioCommand();
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
@@ -43,6 +45,11 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new WatermarkCommand(_executor, _commandBuilder);
         }
+                                
+        public ICommand<BlurEffectModel> CreateBlurEffectCommand()
+        {
+            return new BlurEffectComand(_executor, _commandBuilder);
+        }
         public ICommand<ReplaceAudioModel> CreateReplaceAudioCommand()
         {
             return new ReplaceAudioCommand(_executor, _commandBuilder);
@@ -51,6 +58,7 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new TimestampCommand(_executor, _commandBuilder);
         }
+      
         public ICommand<ConvertAudioModel> CreateConvertAudioCommand()
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);

@@ -10,6 +10,7 @@ using FFmpeg.Core.Interfaces;
 using FFmpeg.Core.Models;
 using FFmpeg.Infrastructure.Services;
 using Microsoft.Extensions.Logging;
+using FFmpeg.Infrastructure.Commands;
 
 namespace FFmpeg.API.Endpoints
 {
@@ -20,6 +21,9 @@ namespace FFmpeg.API.Endpoints
             app.MapPost("/api/video/watermark", AddWatermark)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
+            app.MapPost("/api/video/blurEffect", AddBlurEffect)
+               .DisableAntiforgery()
+               .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
 
             app.MapPost("/api/video/replace-audio", ReplaceAudio)
                 .DisableAntiforgery()
@@ -27,9 +31,13 @@ namespace FFmpeg.API.Endpoints
 
             app.MapPost("/api/video/resize", ChangeResolution)
                 .DisableAntiforgery()
+
                 .WithMetadata(new RequestSizeLimitAttribute(104857600));
 
             // ----------- AUDIO ENDPOINT -----------
+
+                .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
+
             app.MapPost("/api/video/timestamp", AddTimestamp)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600));
@@ -226,6 +234,7 @@ namespace FFmpeg.API.Endpoints
         }
 
         // ---------- AUDIO ----------
+
         private static async Task<IResult> ConvertAudio(
             HttpContext context,
             [FromForm] ConvertAudioDto dto)
@@ -276,9 +285,9 @@ namespace FFmpeg.API.Endpoints
             }
         }
 
-        private static async Task<IResult> AddTimestamp(
-            HttpContext context,
-            [FromForm] TimestampDto dto)
+        private static async Task<IResult> AddBlurEffect(
+HttpContext context,
+[FromForm] BlurEffectDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
@@ -290,11 +299,59 @@ namespace FFmpeg.API.Endpoints
                 {
                     return Results.BadRequest("Video file is required");
                 }
-
                 string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
                 string extension = Path.GetExtension(dto.VideoFile.FileName);
                 string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
+                List<string> filesToCleanup = new List<string> { videoFileName, outputFileName };
+                try
+                {
+                    var command = ffmpegService.CreateBlurEffectCommand();
+                    var result = await command.ExecuteAsync(new BlurEffectModel
+                    {
+                        VideoName = videoFileName,
+                        OutputName = outputFileName,
+                        Sigma = dto.Sigma // Passed from the form
+                    });
+                    if (!result.IsSuccess)
+                    {
+                        logger.LogError("FFmpeg command failed: {ErrorMessage}, Command: {Command}",
+                        result.ErrorMessage, result.CommandExecuted);
+                        return Results.Problem("Failed to apply blur effect: " + result.ErrorMessage, statusCode: 500);
+                    }
+                    byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    return Results.File(fileBytes, "video/mp4", dto.VideoFile.FileName);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error processing blur effect request");
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in ApplyBlurEffect endpoint");
+                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
+            }
+        }
 
+        private static async Task<IResult> AddTimestamp(
+        HttpContext context,
+        [FromForm] TimestampDto dto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+            try
+            {
+                if (dto.VideoFile == null)
+                {
+                    return Results.BadRequest("Video file is required");
+                }
+                string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
+                string extension = Path.GetExtension(dto.VideoFile.FileName);
+                string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
                 List<string> filesToCleanup = new List<string> { videoFileName, outputFileName };
 
                 try
@@ -311,7 +368,6 @@ namespace FFmpeg.API.Endpoints
                         IsVideo = true,
                         VideoCodec = "libx264"
                     });
-
                     if (!result.IsSuccess)
                     {
                         logger.LogError("FFmpeg timestamp command failed: {ErrorMessage}, Command: {Command}",
@@ -321,7 +377,6 @@ namespace FFmpeg.API.Endpoints
 
                     byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
                     _ = fileService.CleanupTempFilesAsync(filesToCleanup);
-
                     return Results.File(fileBytes, "video/mp4", dto.VideoFile.FileName);
                 }
                 catch (Exception ex)
@@ -331,6 +386,7 @@ namespace FFmpeg.API.Endpoints
                     throw;
                 }
             }
+
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error in AddTimestamp endpoint");
