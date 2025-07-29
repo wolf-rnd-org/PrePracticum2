@@ -18,6 +18,7 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
         ICommand<GreenScreenModel> CreateGreenScreenCommand();
+        ICommand<ColorFilterModel> CreateColorFilterCommand(); 
         ICommand<AudioMixModel> CreateMixAudioCommand();
     }
 
@@ -53,10 +54,13 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
         }
-
         public ICommand<GreenScreenModel> CreateGreenScreenCommand()
         {
             return new GreenScreenReplacerCommand(_executor, _commandBuilder);
+        }
+        public ICommand<ColorFilterModel> CreateColorFilterCommand()
+        {
+            return new ColorFilterCommand(_executor, _commandBuilder);
         }
         public ICommand<AudioMixModel> CreateMixAudioCommand()
         {
