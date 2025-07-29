@@ -1,13 +1,11 @@
 ﻿using Ffmpeg.Command.Commands;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using FFmpeg.Core.Models;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace FFmpeg.Infrastructure.Commands
 {
-    public class CropCommand : ICommand
+    public class CropCommand : ICommand<CropRequest>
     {
         private readonly string _ffmpegPath;
 
@@ -16,11 +14,8 @@ namespace FFmpeg.Infrastructure.Commands
             _ffmpegPath = ffmpegPath;
         }
 
-        public async Task<CommandResult> RunAsync(object parameter)
+        public async Task<CommandResult> ExecuteAsync(CropRequest request)
         {
-            if (parameter is not CropRequest request)
-                return CommandResult.Failure("Invalid request type");
-
             var duration = request.EndTime - request.StartTime;
 
             string arguments = $"-i \"{request.InputPath}\" -ss {request.StartTime} -t {duration} -vf \"crop={request.Width}:{request.Height}:{request.X}:{request.Y}\" -c:a copy \"{request.OutputPath}\"";
