@@ -53,6 +53,9 @@ namespace FFmpeg.API.Endpoints
                 .DisableAntiforgery()
                 .WithName("ConvertAudio")
                 .Accepts<ConvertAudioDto>("multipart/form-data");
+            app.MapPost("/api/video/resize", ChangeResolution)
+               .DisableAntiforgery()
+               .WithMetadata(new RequestSizeLimitAttribute(104857600));
         }
 
         private static async Task<IResult> AddWatermark(
@@ -509,6 +512,70 @@ HttpContext context,
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error in ReverseVideo endpoint");
+                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
+            }
+        }
+        private static async Task<IResult> ChangeResolution(
+HttpContext context,
+[FromForm] ResizeDto dto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+            try
+            {
+                if (dto.InputFile == null || dto.Width <= 0 || dto.Height <= 0)
+                {
+                    return Results.BadRequest("Video file and valid resolution (Width and Height) are required.");
+                }
+
+                // Save the uploaded video
+                string inputFilePath = await fileService.SaveUploadedFileAsync(dto.InputFile);
+
+                // Determine output file path
+                string outputFileName = string.IsNullOrWhiteSpace(dto.OutputFile)
+                ? await fileService.GenerateUniqueFileNameAsync(".mp4")
+                : Path.HasExtension(dto.OutputFile) ? dto.OutputFile : dto.OutputFile + ".mp4";
+
+                var filesToCleanup = new List<string> { inputFilePath, outputFileName };
+
+                try
+                {
+                    // Create and execute FFmpeg resize command
+                    var command = ffmpegService.CreateResizeCommand(); // Must return IFFmpegResizeCommand
+                    var result = await command.ExecuteAsync(new ResizeModel
+                    {
+                        InputFile = inputFilePath,
+                        OutputFile = outputFileName,
+                        Width = dto.Width,
+                        Height = dto.Height,
+                        VideoCodec = "libx264"
+                    });
+
+                    if (!result.IsSuccess)
+                    {
+                        logger.LogError("FFmpeg resize failed: {ErrorMessage}. Command: {CommandExecuted}",
+                            result.ErrorMessage, result.CommandExecuted);
+                        return Results.Problem("Failed to resize video: " + result.ErrorMessage, statusCode: 500);
+                    }
+
+                    byte[] outputBytes = await fileService.GetOutputFileAsync(outputFileName);
+
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+
+                    return Results.File(outputBytes, "video/mp4", Path.GetFileName(outputFileName));
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error executing FFmpeg resize command");
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Unhandled error in ChangeResolution endpoint");
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
