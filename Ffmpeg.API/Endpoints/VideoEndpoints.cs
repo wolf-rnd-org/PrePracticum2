@@ -336,6 +336,46 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
+        private static async Task<IResult> RotateVideo(
+   HttpContext context,
+   [FromForm] RotateVideoDto dto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+            if (dto.VideoFile == null || dto.Angle % 90 != 0)
+            {
+                return Results.BadRequest("Video file is required and angle must be a multiple of 90");
+            }
+            string inputFile = await fileService.SaveUploadedFileAsync(dto.VideoFile);
+            string extension = Path.GetExtension(dto.VideoFile.FileName);
+            string outputFile = await fileService.GenerateUniqueFileNameAsync(extension);
+            List<string> filesToCleanup = new() { inputFile, outputFile };
+            try
+            {
+                var command = ffmpegService.CreateRotateVideoCommand();
+                var result = await command.ExecuteAsync(new RotateVideoModel
+                {
+                    InputPath = inputFile,
+                    OutputPath = outputFile,
+                    Angle = dto.Angle
+                });
+                if (!result.IsSuccess)
+                {
+                    logger.LogError("Video rotation failed: {Error}", result.ErrorMessage);
+                    return Results.Problem("Video rotation failed: " + result.ErrorMessage);
+                }
+                byte[] fileBytes = await fileService.GetOutputFileAsync(outputFile);
+                _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                return Results.File(fileBytes, "video/mp4", dto.VideoFile.FileName);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error rotating video");
+                _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                return Results.Problem("Unexpected error: " + ex.Message);
+            }
+        }
     }
 }
 
