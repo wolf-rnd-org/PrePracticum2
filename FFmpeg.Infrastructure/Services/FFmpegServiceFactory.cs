@@ -18,7 +18,10 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
         ICommand<ResizeModel> CreateResizeCommand();
-
+        ICommand<GreenScreenModel> CreateGreenScreenCommand();
+        ICommand<ColorFilterModel> CreateColorFilterCommand();
+        ICommand<AudioMixModel> CreateMixAudioCommand();
+        ICommand<ReverseVideoModel> ReverseVideoCommand();
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -36,7 +39,6 @@ namespace FFmpeg.Infrastructure.Services
             _executor = new FFmpegExecutor(ffmpegPath, logOutput, logger);
             _commandBuilder = new CommandBuilder(configuration);
         }
-
         public ICommand<WatermarkModel> CreateWatermarkCommand()
         {
             return new WatermarkCommand(_executor, _commandBuilder);
@@ -56,6 +58,23 @@ namespace FFmpeg.Infrastructure.Services
         public ICommand<ResizeModel> CreateResizeCommand()
         {
             return new ResizeCommand(_executor, _commandBuilder);
+        }
+        public ICommand<GreenScreenModel> CreateGreenScreenCommand()
+        {
+            return new GreenScreenReplacerCommand(_executor, _commandBuilder);
+        }
+        public ICommand<ColorFilterModel> CreateColorFilterCommand()
+        {
+            return new ColorFilterCommand(_executor, _commandBuilder);
+        }
+        public ICommand<AudioMixModel> CreateMixAudioCommand()
+        {
+            return new MixAudioCommand(_executor, _commandBuilder, new Logger());
+        }
+
+        public ICommand<ReverseVideoModel> ReverseVideoCommand()
+        {
+            return new ReverseVideoCommand(_executor, _commandBuilder);
         }
     }
 }
