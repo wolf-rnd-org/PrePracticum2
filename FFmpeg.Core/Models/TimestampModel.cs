@@ -12,7 +12,6 @@ namespace FFmpeg.Core.Models
         public string OutputFile { get; set; } = "";
         public bool IsVideo { get; set; } = true;
         public string VideoCodec { get; set; } = "libx264";
-
         public int XPosition { get; set; } = 10;
         public int YPosition { get; set; } = 10;
         public int FontSize { get; set; } = 24;
