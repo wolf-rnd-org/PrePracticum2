@@ -18,6 +18,7 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
         ICommand<ColorFilterModel> CreateColorFilterCommand(); 
+        ICommand<AudioMixModel> CreateMixAudioCommand();
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -55,6 +56,10 @@ namespace FFmpeg.Infrastructure.Services
         public ICommand<ColorFilterModel> CreateColorFilterCommand()
         {
             return new ColorFilterCommand(_executor, _commandBuilder);
+        }
+        public ICommand<AudioMixModel> CreateMixAudioCommand()
+        {
+            return new MixAudioCommand(_executor, _commandBuilder, new Logger());
         }
     }
 }
