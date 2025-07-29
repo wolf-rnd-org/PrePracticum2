@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -15,18 +15,27 @@ namespace FFmpeg.API.Endpoints
 {
     public static class VideoEndpoints
     {
+        private const int MaxUploadSize = 104_857_600;
+
         public static void MapEndpoints(this WebApplication app)
         {
+
             app.MapPost("/api/video/watermark", AddWatermark)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
-            app.MapPost("/api/video/gif", CreateGif)
+
+            app.MapPost("/api/video/colorfilter", ApplyColorFilter)
                 .DisableAntiforgery()
-                .Accepts<GifDto>("multipart/form-data");
+                .WithName("ApplyColorFilter")
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
 
             app.MapPost("/api/video/replace-audio", ReplaceAudio)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600));
+            
+            app.MapPost("/api/video/gif", CreateGif)
+                .DisableAntiforgery()
+                .Accepts<GifDto>("multipart/form-data");
 
             // ----------- AUDIO ENDPOINT -----------
             app.MapPost("/api/video/timestamp", AddTimestamp)
@@ -101,9 +110,7 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-
-
-
+      
         private static async Task<IResult> CreateGif(
             HttpContext context,
             [FromForm] GifDto dto)
@@ -162,8 +169,6 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-
-        // ---------- AUDIO ----------
 
         private static async Task<IResult> ReplaceAudio(
             HttpContext context,
@@ -224,7 +229,6 @@ namespace FFmpeg.API.Endpoints
         }
 
         // ---------- AUDIO ----------
-
         private static async Task<IResult> ConvertAudio(
             HttpContext context,
             [FromForm] ConvertAudioDto dto)
@@ -274,6 +278,65 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("Unexpected error: " + ex.Message);
             }
         }
+        private static async Task<IResult> ApplyColorFilter(
+   HttpContext context,
+   [FromForm] ColorFilterDto dto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+            try
+            {
+                if (dto.VideoFile == null)
+                {
+                    return Results.BadRequest("Video file is required");
+                }
+
+                string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
+                string extension = Path.GetExtension(dto.VideoFile.FileName);
+                string outputFileName = string.IsNullOrEmpty(dto.OutputFileName)
+                    ? await fileService.GenerateUniqueFileNameAsync(extension)
+                    : dto.OutputFileName;
+
+                List<string> filesToCleanup = new() { videoFileName, outputFileName };
+
+                try
+                {
+                    var command = ffmpegService.CreateColorFilterCommand();
+                    var result = await command.ExecuteAsync(new ColorFilterModel
+                    {
+                        InputFile = videoFileName,
+                        OutputFile = outputFileName,
+                        IsVideo = true,
+                        VideoCodec = "libx264"
+                    });
+
+                    if (!result.IsSuccess)
+                    {
+                        logger.LogError("FFmpeg color filter command failed: {ErrorMessage}, Command: {Command}",
+                            result.ErrorMessage, result.CommandExecuted);
+                        return Results.Problem("Failed to apply color filter: " + result.ErrorMessage, statusCode: 500);
+                    }
+
+                    byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+
+                    return Results.File(fileBytes, "video/mp4", dto.VideoFile.FileName);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error processing color filter request");
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in ApplyColorFilter endpoint");
+                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
+            }
+        }
 
         private static async Task<IResult> AddTimestamp(
             HttpContext context,
@@ -294,7 +357,7 @@ namespace FFmpeg.API.Endpoints
                 string extension = Path.GetExtension(dto.VideoFile.FileName);
                 string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
 
-                List<string> filesToCleanup = new List<string> { videoFileName, outputFileName };
+                List<string> filesToCleanup = new() { videoFileName, outputFileName };
 
                 try
                 {
@@ -338,4 +401,5 @@ namespace FFmpeg.API.Endpoints
         }
     }
 }
+
 
