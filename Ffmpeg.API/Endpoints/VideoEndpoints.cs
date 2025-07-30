@@ -58,7 +58,7 @@ namespace FFmpeg.API.Endpoints
 
             app.MapPost("/api/video/brightness-contrast", AdjustBrightnessContrast)
                .DisableAntiforgery()
-               .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSizeBytes)); 
+               .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSizeBytes));
         }
         private static async Task<IResult> AddWatermark(HttpContext context, [FromForm] WatermarkDto dto)
         {
@@ -116,7 +116,6 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-
         private static async Task<IResult> ReplaceGreenScreen(
                 HttpContext context,
                 [FromForm] GreenScreenDto dto)
@@ -178,7 +177,6 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-
         private static async Task<IResult> ReplaceAudio(HttpContext context, [FromForm] ReplaceAudioDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
@@ -231,7 +229,6 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-
         private static async Task<IResult> ConvertAudio(
             HttpContext context,
             [FromForm] ConvertAudioDto dto)
@@ -282,7 +279,6 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("Unexpected error: " + ex.Message);
             }
         }
-
         private static async Task<IResult> ApplyColorFilter(HttpContext context, [FromForm] ColorFilterDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
@@ -339,7 +335,6 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-
         private static async Task<IResult> AddBlurEffect(
             HttpContext context,
             [FromForm] BlurEffectDto dto)
@@ -390,8 +385,6 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-
-
         private static async Task<IResult> AddTimestamp(
         HttpContext context,
         [FromForm] TimestampDto dto)
@@ -568,6 +561,5 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-
     }
 }
