@@ -66,11 +66,11 @@ namespace FFmpeg.API.Endpoints
                 .Accepts<ConvertAudioDto>("multipart/form-data")
                 .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
 
-<<<<<<< HEAD
             app.MapPost("/api/video/add-border", AddBorder)
-=======
+                .DisableAntiforgery()
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
+
             app.MapPost("/api/video/change-speed", ChangeVideoSpeed)
->>>>>>> 67a8e693f9b5fe18ec8e0df0765026a5c4b79cb2
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
 
@@ -81,10 +81,7 @@ namespace FFmpeg.API.Endpoints
             app.MapPost("/api/video/resize", ChangeResolution)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
-<<<<<<< HEAD
 
-=======
->>>>>>> 67a8e693f9b5fe18ec8e0df0765026a5c4b79cb2
         }
 
         private static async Task<IResult> ConvertVideo(
@@ -537,7 +534,6 @@ namespace FFmpeg.API.Endpoints
             }
         }
 
-<<<<<<< HEAD
         //private static async Task<IResult> AddTimestamp(HttpContext context, [FromForm] TimestampDto dto)
         //{
         //    // Copy the full implementation from your original code
@@ -545,10 +541,7 @@ namespace FFmpeg.API.Endpoints
         //}
 
         // הפונקציה החדשה מ-master
-        private static async Task<IResult> AdjustBrightnessContrast(
-            HttpContext context,
-            [FromForm] BrightnessContrastDto dto)
-=======
+       
         private static async Task<IResult> AddTimestamp(HttpContext context, [FromForm] TimestampDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
@@ -604,7 +597,6 @@ namespace FFmpeg.API.Endpoints
         }
 
         private static async Task<IResult> AdjustBrightnessContrast(HttpContext context, [FromForm] BrightnessContrastDto dto)
->>>>>>> 67a8e693f9b5fe18ec8e0df0765026a5c4b79cb2
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
@@ -660,59 +652,59 @@ namespace FFmpeg.API.Endpoints
             }
         }
 
-        private static async Task<IResult> AddTimestamp(
-            HttpContext context,
-            [FromForm] TimestampDto dto)
-        {
-            var fileService = context.RequestServices.GetRequiredService<IFileService>();
-            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
-            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-            try
-            {
-                if (dto.VideoFile == null)
-                {
-                    return Results.BadRequest("Video file is required");
-                }
-                string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
-                string extension = Path.GetExtension(dto.VideoFile.FileName);
-                string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
-                List<string> filesToCleanup = new List<string> { videoFileName, outputFileName };
-                try
-                {
-                    var command = ffmpegService.CreateTimestampCommand();
-                    var result = await command.ExecuteAsync(new TimestampModel
-                    {
-                        InputFile = videoFileName,
-                        OutputFile = outputFileName,
-                        XPosition = dto.XPosition == 0 ? 10 : dto.XPosition,
-                        YPosition = dto.YPosition == 0 ? 10 : dto.YPosition,
-                        FontSize = dto.FontSize == 0 ? 10 : dto.FontSize,
-                        FontColor = string.IsNullOrWhiteSpace(dto.FontColor) ? "white" : dto.FontColor,
-                        IsVideo = true,
-                        VideoCodec = "libx264"
-                    });
-                    if (!result.IsSuccess)
-                    {
-                        logger.LogError("FFmpeg timestamp command failed: {ErrorMessage}, Command: {Command}", result.ErrorMessage, result.CommandExecuted);
-                        return Results.Problem("Failed to add timestamp: " + result.ErrorMessage, statusCode: 500);
-                    }
-                    byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
-                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
-                    return Results.File(fileBytes, "video/mp4", dto.VideoFile.FileName);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Error processing timestamp request");
-                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
-                    throw;
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error in AddTimestamp endpoint");
-                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
-            }
-        }
+        //private static async Task<IResult> AddTimestamp(
+        //    HttpContext context,
+        //    [FromForm] TimestampDto dto)
+        //{
+        //    var fileService = context.RequestServices.GetRequiredService<IFileService>();
+        //    var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+        //    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        //    try
+        //    {
+        //        if (dto.VideoFile == null)
+        //        {
+        //            return Results.BadRequest("Video file is required");
+        //        }
+        //        string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
+        //        string extension = Path.GetExtension(dto.VideoFile.FileName);
+        //        string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
+        //        List<string> filesToCleanup = new List<string> { videoFileName, outputFileName };
+        //        try
+        //        {
+        //            var command = ffmpegService.CreateTimestampCommand();
+        //            var result = await command.ExecuteAsync(new TimestampModel
+        //            {
+        //                InputFile = videoFileName,
+        //                OutputFile = outputFileName,
+        //                XPosition = dto.XPosition == 0 ? 10 : dto.XPosition,
+        //                YPosition = dto.YPosition == 0 ? 10 : dto.YPosition,
+        //                FontSize = dto.FontSize == 0 ? 10 : dto.FontSize,
+        //                FontColor = string.IsNullOrWhiteSpace(dto.FontColor) ? "white" : dto.FontColor,
+        //                IsVideo = true,
+        //                VideoCodec = "libx264"
+        //            });
+        //            if (!result.IsSuccess)
+        //            {
+        //                logger.LogError("FFmpeg timestamp command failed: {ErrorMessage}, Command: {Command}", result.ErrorMessage, result.CommandExecuted);
+        //                return Results.Problem("Failed to add timestamp: " + result.ErrorMessage, statusCode: 500);
+        //            }
+        //            byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
+        //            _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+        //            return Results.File(fileBytes, "video/mp4", dto.VideoFile.FileName);
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            logger.LogError(ex, "Error processing timestamp request");
+        //            _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+        //            throw;
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        logger.LogError(ex, "Error in AddTimestamp endpoint");
+        //        return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
+        //    }
+        //}
 
         private static async Task<IResult> AddBorder(
             HttpContext context,
