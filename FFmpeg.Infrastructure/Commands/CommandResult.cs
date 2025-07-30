@@ -7,6 +7,9 @@
         public string CommandExecuted { get; set; }
         public string OutputLog { get; set; }
 
+        public bool Error { get; set; }
+
+
         public static CommandResult Success()
         {
             return new CommandResult { IsSuccess = true };
@@ -16,5 +19,6 @@
         {
             return new CommandResult { IsSuccess = false, ErrorMessage = errorMessage };
         }
+
     }
 }

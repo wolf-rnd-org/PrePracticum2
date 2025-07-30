@@ -15,9 +15,11 @@ namespace FFmpeg.Infrastructure.Services
     public interface IFFmpegServiceFactory
     {
         ICommand<WatermarkModel> CreateWatermarkCommand();
+        ICommand<ThumbnailModel> CreateThumbnailCommand();
         ICommand<BlurEffectModel> CreateBlurEffectCommand();
         ICommand<ReplaceAudioModel> CreateReplaceAudioCommand();
         ICommand<TimestampModel> CreateTimestampCommand();
+        ICommand<MergeVideosModel> CreateMergeVideosCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
         ICommand<SpeedChangeModel> CreateChangeSpeedCommand();
         ICommand<AudioMixModel> CreateMixAudioCommand();
@@ -25,6 +27,7 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<AnimatedTextModel> CreateAnimatedTextCommand();
         ICommand<GreenScreenModel> CreateGreenScreenCommand();
         ICommand<ReverseVideoModel> ReverseVideoCommand();
+        ICommand<ResizeModel> CreateResizeCommand();
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -32,7 +35,8 @@ namespace FFmpeg.Infrastructure.Services
         private readonly FFmpegExecutor _executor;
         private readonly ICommandBuilder _commandBuilder;
 
-        public FFmpegServiceFactory(IConfiguration configuration, ILogger? logger = null)
+        public FFmpegServiceFactory(IConfiguration configuration, ILogger logger = null)
+
         {
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
             string ffmpegPath = Path.Combine(baseDirectory, "external", "ffmpeg.exe");
@@ -47,6 +51,10 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new WatermarkCommand(_executor, _commandBuilder);
         }
+        public ICommand<ThumbnailModel> CreateThumbnailCommand()
+        {
+            return new ThumbnailCommand(_executor, _commandBuilder);
+        }
         public ICommand<BlurEffectModel> CreateBlurEffectCommand()
         {
             return new BlurEffectComand(_executor, _commandBuilder);
@@ -58,6 +66,10 @@ namespace FFmpeg.Infrastructure.Services
         public ICommand<TimestampModel> CreateTimestampCommand()
         {
             return new TimestampCommand(_executor, _commandBuilder);
+        }
+        public ICommand<MergeVideosModel> CreateMergeVideosCommand()
+        {
+            return new MergeVideosCommand(_executor, _commandBuilder);
         }
         public ICommand<ConvertAudioModel> CreateConvertAudioCommand()
         {
@@ -86,6 +98,10 @@ namespace FFmpeg.Infrastructure.Services
         public ICommand<ReverseVideoModel> ReverseVideoCommand()
         {
             return new ReverseVideoCommand(_executor, _commandBuilder);
+        }
+        public ICommand<ResizeModel> CreateResizeCommand()
+        {
+            return new ResizeCommand(_executor, _commandBuilder);
         }
     }
 }
