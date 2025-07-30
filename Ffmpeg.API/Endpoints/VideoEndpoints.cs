@@ -30,7 +30,6 @@ namespace FFmpeg.API.Endpoints
             app.MapPost("/api/video/replace-audio", ReplaceAudio)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600));
-
             // ----------- AUDIO ENDPOINT -----------
             app.MapPost("/api/video/timestamp", AddTimestamp)
                 .DisableAntiforgery()
@@ -56,10 +55,8 @@ namespace FFmpeg.API.Endpoints
                 {
                     return Results.BadRequest("Video file and watermark file are required");
                 }
-
                 string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
                 string watermarkFileName = await fileService.SaveUploadedFileAsync(dto.WatermarkFile);
-
                 string extension = Path.GetExtension(dto.VideoFile.FileName);
                 string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
 
@@ -78,7 +75,6 @@ namespace FFmpeg.API.Endpoints
                         IsVideo = true,
                         VideoCodec = "libx264"
                     });
-
                     if (!result.IsSuccess)
                     {
                         logger.LogError("FFmpeg command failed: {ErrorMessage}, Command: {Command}",
@@ -104,7 +100,6 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-
         private static async Task<IResult> ReplaceAudio(
             HttpContext context,
             [FromForm] ReplaceAudioDto dto)
@@ -213,7 +208,6 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("Unexpected error: " + ex.Message);
             }
         }
-
         private static async Task<IResult> AddTimestamp(
             HttpContext context,
             [FromForm] TimestampDto dto)
