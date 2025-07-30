@@ -41,6 +41,10 @@ namespace FFmpeg.API.Endpoints
                 .WithName("ApplyColorFilter")
                 .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
 
+            app.MapPost("/api/video/mergevideos", MergeVideos)
+                .DisableAntiforgery()
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize)); // 100 MB
+
             app.MapPost("/api/video/replace-audio", ReplaceAudio)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600));
@@ -243,7 +247,6 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-
         private static async Task<IResult> ReplaceAudio(
             HttpContext context,
             [FromForm] ReplaceAudioDto dto)
@@ -300,8 +303,6 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-
-
         private static async Task<IResult> ConvertAudio(
             HttpContext context,
             [FromForm] ConvertAudioDto dto)
@@ -354,6 +355,7 @@ namespace FFmpeg.API.Endpoints
         private static async Task<IResult> ApplyColorFilter(
    HttpContext context,
    [FromForm] ColorFilterDto dto)
+
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
@@ -461,8 +463,6 @@ HttpContext context,
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-
-
         private static async Task<IResult> AddTimestamp(
         HttpContext context,
         [FromForm] TimestampDto dto)
@@ -519,15 +519,60 @@ HttpContext context,
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
+        private static async Task<IResult> MergeVideos(
+                      HttpContext context,
+                      [FromForm] MergeVideosDto dto)
 
-        private static async Task<IResult> ReverseVideo(
-            HttpContext context,
-            [FromForm] ReverseVideoDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
             var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+            try
+            {
+                // ולידציה בסיסית
+                if (dto.InputFile1 == null || dto.InputFile2 == null)
+                    return Results.BadRequest("Both input video files are required.");
+                // שמירת קבצים זמניים
+                string input1 = await fileService.SaveUploadedFileAsync(dto.InputFile1);
+                string input2 = await fileService.SaveUploadedFileAsync(dto.InputFile2);
+                string extension = Path.GetExtension(dto.InputFile1.FileName);
+                string output = await fileService.GenerateUniqueFileNameAsync(extension);
 
+                List<string> filesToCleanup = new() { input1, input2, output };
+                // בניית מודל ושליחת הפקודה
+                var command = ffmpegService.CreateMergeVideosCommand();
+                var result = await command.ExecuteAsync(new MergeVideosModel
+                {
+                    InputFile1 = input1,
+                    InputFile2 = input2,
+                    OutputFile = output,
+                    Direction = dto.Direction
+                });
+                if (!result.IsSuccess)
+                {
+                    logger.LogError("MergeVideos failed: {Error}, Command: {Command}",
+                        result.ErrorMessage, result.CommandExecuted);
+                    return Results.Problem("Failed to merge videos: " + result.ErrorMessage, statusCode: 500);
+                }
+                // קריאת הקובץ הסופי
+                var fileBytes = await fileService.GetOutputFileAsync(output);
+                // ניקוי קבצים זמניים
+                _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                // החזרת קובץ למשתמש
+                return Results.File(fileBytes, "video/mp4", "merged_" + dto.InputFile1.FileName);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in MergeVideos endpoint");
+                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
+            }
+        }        
+        private static async Task<IResult> ReverseVideo(
+            HttpContext context,
+            [FromForm] ReverseVideoDto dto){
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
             try
             {
                 if (dto.VideoFile == null)

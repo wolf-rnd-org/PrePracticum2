@@ -1,4 +1,4 @@
-using Ffmpeg.Command;
+﻿using Ffmpeg.Command;
 using FFmpeg.API.Endpoints;
 using FFmpeg.Core.Interfaces;
 using FFmpeg.Infrastructure.Services;
