@@ -5,6 +5,7 @@ using FFmpeg.Infrastructure.Commands;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,13 +15,16 @@ namespace FFmpeg.Infrastructure.Services
     public interface IFFmpegServiceFactory
     {
         ICommand<WatermarkModel> CreateWatermarkCommand();
+        ICommand<BlurEffectModel> CreateBlurEffectCommand();
         ICommand<ReplaceAudioModel> CreateReplaceAudioCommand();
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
         ICommand<SpeedChangeModel> CreateChangeSpeedCommand();
         ICommand<AudioMixModel> CreateMixAudioCommand();
         ICommand<ColorFilterModel> CreateColorFilterCommand();
-
+        ICommand<AnimatedTextModel> CreateAnimatedTextCommand();
+        ICommand<GreenScreenModel> CreateGreenScreenCommand();
+        ICommand<ReverseVideoModel> ReverseVideoCommand();
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -28,7 +32,7 @@ namespace FFmpeg.Infrastructure.Services
         private readonly FFmpegExecutor _executor;
         private readonly ICommandBuilder _commandBuilder;
 
-        public FFmpegServiceFactory(IConfiguration configuration, ILogger logger = null)
+        public FFmpegServiceFactory(IConfiguration configuration, ILogger? logger = null)
         {
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
             string ffmpegPath = Path.Combine(baseDirectory, "external", "ffmpeg.exe");
@@ -43,6 +47,10 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new WatermarkCommand(_executor, _commandBuilder);
         }
+        public ICommand<BlurEffectModel> CreateBlurEffectCommand()
+        {
+            return new BlurEffectComand(_executor, _commandBuilder);
+        }
         public ICommand<ReplaceAudioModel> CreateReplaceAudioCommand()
         {
             return new ReplaceAudioCommand(_executor, _commandBuilder);
@@ -55,12 +63,18 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
         }
-
-        public ICommand<SpeedChangeModel> CreateChangeSpeedCommand() // מימוש השיטה החדשה
+        public ICommand<SpeedChangeModel> CreateChangeSpeedCommand()
         {
             return new SpeedChangeCommand(_executor, _commandBuilder);
         }
-
+        public ICommand<AnimatedTextModel> CreateAnimatedTextCommand()
+        {
+            return new AnimatedTextCommand(_executor, _commandBuilder);
+        }
+        public ICommand<GreenScreenModel> CreateGreenScreenCommand()
+        {
+            return new GreenScreenReplacerCommand(_executor, _commandBuilder);
+        }
         public ICommand<ColorFilterModel> CreateColorFilterCommand()
         {
             return new ColorFilterCommand(_executor, _commandBuilder);
@@ -69,6 +83,9 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new MixAudioCommand(_executor, _commandBuilder, new Logger());
         }
-
+        public ICommand<ReverseVideoModel> ReverseVideoCommand()
+        {
+            return new ReverseVideoCommand(_executor, _commandBuilder);
+        }
     }
 }
