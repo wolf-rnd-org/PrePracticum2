@@ -27,8 +27,8 @@ namespace Ffmpeg.Command.Commands
               .AddOption("-map [aout]")
               .AddOption("-c:a libmp3lame")
               .SetOutput(model.OutputFile);
-            _logger.LogInformation($"FFmpeg command: {CommandBuilder.Build()}");
 
+            _logger.LogInformation($"FFmpeg command: {CommandBuilder.Build()}");
             return await RunAsync();
         }
     }
