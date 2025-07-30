@@ -523,69 +523,64 @@ HttpContext context,
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-        private static async Task<IResult> AdjustBrightnessContrast(HttpContext context, [FromForm] BrightnessContrastDto dto)
+        private static async Task<IResult> AdjustBrightnessContrast(
+       HttpContext context,
+       [FromForm] BrightnessContrastDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
             var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-
-            if (dto.VideoFile == null || dto.VideoFile.Length == 0)
-            {
-                return Results.BadRequest("Video file is required");
-            }
-
-            // שמירת קובץ הווידאו שהועלה
-            string inputFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
-            string inputFilePath = fileService.GetFullInputPath(inputFileName);
-
-            // יצירת שם קובץ פלט ייחודי
-            string extension = Path.GetExtension(dto.VideoFile.FileName);
-            string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
-            string outputFilePath = fileService.GetFullOutputPath(outputFileName);
-
-            List<string> filesToCleanup = new() { inputFileName, outputFileName };
 
             try
             {
-                string ffmpegArgs = $"-i \"{inputFilePath}\" -vf eq=brightness={dto.Brightness}:contrast={dto.Contrast} -c:a copy \"{outputFilePath}\"";
-
-                var process = new Process
+                if (dto.VideoFile == null || dto.VideoFile.Length == 0)
                 {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = "ffmpeg",
-                        Arguments = ffmpegArgs,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    }
-                };
-
-                process.Start();
-                string stderr = await process.StandardError.ReadToEndAsync();
-                await process.WaitForExitAsync();
-
-                if (process.ExitCode != 0)
-                {
-                    logger.LogError("FFmpeg brightness/contrast command failed: {Error}", stderr);
-                    return Results.Problem("Failed to adjust brightness/contrast: " + stderr, statusCode: 500);
+                    return Results.BadRequest("Video file is required");
                 }
 
-                // קריאת קובץ הפלט
-                byte[] outputBytes = await fileService.GetOutputFileAsync(outputFileName);
+                string inputFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
+                string extension = Path.GetExtension(dto.VideoFile.FileName);
+                string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
 
-                // ניקוי הקבצים הזמניים
-                _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                List<string> filesToCleanup = new() { inputFileName, outputFileName };
 
-                return Results.File(outputBytes, "video/mp4", $"edited_{dto.VideoFile.FileName}");
+                try
+                {
+                    var command = ffmpegService.CreateBrightnessContrastCommand();
+                    var result = await command.ExecuteAsync(new BrightnessContrastModel
+                    {
+                        InputFile = inputFileName,
+                        OutputFile = outputFileName,
+                        Brightness = dto.Brightness,
+                        Contrast = dto.Contrast
+                    });
+
+                    if (!result.IsSuccess)
+                    {
+                        logger.LogError("FFmpeg brightness/contrast command failed: {ErrorMessage}, Command: {Command}",
+                            result.ErrorMessage, result.CommandExecuted);
+                        return Results.Problem("Failed to adjust brightness/contrast: " + result.ErrorMessage, statusCode: 500);
+                    }
+
+                    byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+
+                    return Results.File(fileBytes, "video/mp4", $"adjusted_{dto.VideoFile.FileName}");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error during brightness/contrast processing");
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    throw;
+                }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error processing brightness/contrast request");
-                _ = fileService.CleanupTempFilesAsync(filesToCleanup);
-                return Results.Problem("An unexpected error occurred: " + ex.Message, statusCode: 500);
+                logger.LogError(ex, "Unhandled error in AdjustBrightnessContrast endpoint");
+                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
+
         private static async Task<IResult> ReverseVideo(
     HttpContext context,
     [FromForm] ReverseVideoDto dto)
