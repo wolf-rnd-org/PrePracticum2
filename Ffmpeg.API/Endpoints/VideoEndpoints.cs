@@ -10,6 +10,7 @@ using FFmpeg.Core.Interfaces;
 using FFmpeg.Core.Models;
 using FFmpeg.Infrastructure.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using FFmpeg.Infrastructure.Commands;
 
 namespace FFmpeg.API.Endpoints
@@ -514,7 +515,67 @@ namespace FFmpeg.API.Endpoints
             }
         }
 
-        private static async Task<IResult> MergeVideos(HttpContext context, [FromForm] MergeVideosDto dto)
+        private static async Task<IResult> AdjustBrightnessContrast(
+            HttpContext context,
+            [FromForm] BrightnessContrastDto dto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+            try
+            {
+                if (dto.VideoFile == null || dto.VideoFile.Length == 0)
+                {
+                    return Results.BadRequest("Video file is required");
+                }
+
+                string inputFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
+                string extension = Path.GetExtension(dto.VideoFile.FileName);
+                string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
+
+                List<string> filesToCleanup = new() { inputFileName, outputFileName };
+
+                try
+                {
+                    var command = ffmpegService.CreateBrightnessContrastCommand();
+                    var result = await command.ExecuteAsync(new BrightnessContrastModel
+                    {
+                        InputFile = inputFileName,
+                        OutputFile = outputFileName,
+                        Brightness = dto.Brightness,
+                        Contrast = dto.Contrast
+                    });
+
+                    if (!result.IsSuccess)
+                    {
+                        logger.LogError("FFmpeg brightness/contrast command failed: {ErrorMessage}, Command: {Command}",
+                            result.ErrorMessage, result.CommandExecuted);
+                        return Results.Problem("Failed to adjust brightness/contrast: " + result.ErrorMessage, statusCode: 500);
+                    }
+
+                    byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+
+                    return Results.File(fileBytes, "video/mp4", $"adjusted_{dto.VideoFile.FileName}");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error during brightness/contrast processing");
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Unhandled error in AdjustBrightnessContrast endpoint");
+                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
+            }
+        }
+
+        private static async Task<IResult> MergeVideos(
+            HttpContext context,
+            [FromForm] MergeVideosDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
@@ -560,7 +621,9 @@ namespace FFmpeg.API.Endpoints
             }
         }
 
-        private static async Task<IResult> ReverseVideo(HttpContext context, [FromForm] ReverseVideoDto dto)
+        private static async Task<IResult> ReverseVideo(
+            HttpContext context,
+            [FromForm] ReverseVideoDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
@@ -672,6 +735,7 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
+
         private static async Task<IResult> ChangeVideoSpeed(HttpContext context, [FromForm] ChangeSpeedDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
@@ -725,6 +789,5 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-
     }
 }
