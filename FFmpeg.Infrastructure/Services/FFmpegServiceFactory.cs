@@ -21,7 +21,7 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
         ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand();
         ICommand<GreenScreenModel> CreateGreenScreenCommand();
-        ICommand<ColorFilterModel> CreateColorFilterCommand(); 
+        ICommand<ColorFilterModel> CreateColorFilterCommand();
         ICommand<AudioMixModel> CreateMixAudioCommand();
         ICommand<ReverseVideoModel> ReverseVideoCommand();
     }
@@ -44,7 +44,7 @@ namespace FFmpeg.Infrastructure.Services
         public ICommand<WatermarkModel> CreateWatermarkCommand()
         {
             return new WatermarkCommand(_executor, _commandBuilder);
-        }                        
+        }
         public ICommand<BlurEffectModel> CreateBlurEffectCommand()
         {
             return new BlurEffectComand(_executor, _commandBuilder);
@@ -56,13 +56,13 @@ namespace FFmpeg.Infrastructure.Services
         public ICommand<TimestampModel> CreateTimestampCommand()
         {
             return new TimestampCommand(_executor, _commandBuilder);
-        }   
+        }
         public ICommand<ConvertAudioModel> CreateConvertAudioCommand()
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
         }
-        public ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand() 
-        { 
+        public ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand()
+        {
             return new BrightnessContrastCommand(_executor, _commandBuilder);
         }
         public ICommand<GreenScreenModel> CreateGreenScreenCommand()

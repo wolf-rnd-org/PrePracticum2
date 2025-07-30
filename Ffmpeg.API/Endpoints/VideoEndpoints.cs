@@ -463,7 +463,6 @@ namespace FFmpeg.API.Endpoints
 
             try
             {
-                // הפקודה להרצת FFmpeg עם בראייטנס וקונטרסט
                 string ffmpegArgs = $"-i \"{inputFilePath}\" -vf eq=brightness={dto.Brightness}:contrast={dto.Contrast} -c:a copy \"{outputFilePath}\"";
 
                 var process = new Process
