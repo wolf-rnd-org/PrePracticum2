@@ -1,4 +1,3 @@
-
 using Ffmpeg.Command;
 using Ffmpeg.Command.Commands;
 using FFmpeg.Core.Models;
@@ -10,6 +9,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 namespace FFmpeg.Infrastructure.Services
 {
     public interface IFFmpegServiceFactory
@@ -21,19 +21,22 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<MergeVideosModel> CreateMergeVideosCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
+        ICommand<ConvertVideoModel> CreateConvertVideoCommand();
         ICommand<AnimatedTextModel> CreateAnimatedTextCommand();
         ICommand<GreenScreenModel> CreateGreenScreenCommand();
-        ICommand<ColorFilterModel> CreateColorFilterCommand(); 
+        ICommand<ColorFilterModel> CreateColorFilterCommand();
         ICommand<AudioMixModel> CreateMixAudioCommand();
         ICommand<ReverseVideoModel> ReverseVideoCommand();
         ICommand<ResizeModel> CreateResizeCommand();
         ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand();
         ICommand<SpeedChangeModel> CreateChangeSpeedCommand();
     }
+
     public class FFmpegServiceFactory : IFFmpegServiceFactory
     {
         private readonly FFmpegExecutor _executor;
         private readonly ICommandBuilder _commandBuilder;
+
         public FFmpegServiceFactory(IConfiguration configuration, ILogger logger = null)
         {
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
@@ -44,66 +47,85 @@ namespace FFmpeg.Infrastructure.Services
             _executor = new FFmpegExecutor(ffmpegPath, logOutput, logger);
             _commandBuilder = new CommandBuilder(configuration);
         }
+
         public ICommand<WatermarkModel> CreateWatermarkCommand()
         {
             return new WatermarkCommand(_executor, _commandBuilder);
         }
+
         public ICommand<ThumbnailModel> CreateThumbnailCommand()
         {
             return new ThumbnailCommand(_executor, _commandBuilder);
         }
+
         public ICommand<BlurEffectModel> CreateBlurEffectCommand()
         {
             return new BlurEffectComand(_executor, _commandBuilder);
         }
+
         public ICommand<ReplaceAudioModel> CreateReplaceAudioCommand()
         {
             return new ReplaceAudioCommand(_executor, _commandBuilder);
         }
+
         public ICommand<TimestampModel> CreateTimestampCommand()
         {
             return new TimestampCommand(_executor, _commandBuilder);
         }
+
         public ICommand<MergeVideosModel> CreateMergeVideosCommand()
         {
             return new MergeVideosCommand(_executor, _commandBuilder);
         }
+
         public ICommand<ConvertAudioModel> CreateConvertAudioCommand()
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
         }
+
+        public ICommand<ConvertVideoModel> CreateConvertVideoCommand()
+        {
+            return new ConvertVideoCommand(_executor, _commandBuilder);
+        }
+
         public ICommand<AnimatedTextModel> CreateAnimatedTextCommand()
         {
             return new AnimatedTextCommand(_executor, _commandBuilder);
         }
+
         public ICommand<GreenScreenModel> CreateGreenScreenCommand()
         {
             return new GreenScreenReplacerCommand(_executor, _commandBuilder);
         }
+
         public ICommand<ColorFilterModel> CreateColorFilterCommand()
         {
             return new ColorFilterCommand(_executor, _commandBuilder);
         }
+
         public ICommand<AudioMixModel> CreateMixAudioCommand()
         {
             return new MixAudioCommand(_executor, _commandBuilder, new Logger());
         }
+
         public ICommand<ReverseVideoModel> ReverseVideoCommand()
         {
             return new ReverseVideoCommand(_executor, _commandBuilder);
         }
+
         public ICommand<ResizeModel> CreateResizeCommand()
         {
             return new ResizeCommand(_executor, _commandBuilder);
         }
+
         public ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand()
         {
             return new BrightnessContrastCommand(_executor, _commandBuilder);
         }
+
         public ICommand<SpeedChangeModel> CreateChangeSpeedCommand()
         {
             return new SpeedChangeCommand(_executor, _commandBuilder);
         }
     }
-
 }
