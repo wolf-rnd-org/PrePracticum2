@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -16,48 +15,47 @@ namespace FFmpeg.API.Endpoints
 {
     public static class VideoEndpoints
     {
-        private const int MaxUploadSize = 104_857_600;
+        private const int MaxUploadSizeBytes = 104_857_600; // 100 MB
 
         public static void MapEndpoints(this WebApplication app)
         {
-
             app.MapPost("/api/video/watermark", AddWatermark)
                 .DisableAntiforgery()
-                .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSizeBytes));
+
             app.MapPost("/api/video/blurEffect", AddBlurEffect)
                .DisableAntiforgery()
-               .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
+               .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSizeBytes));
 
             app.MapPost("/api/video/greenscreen", ReplaceGreenScreen)
                 .DisableAntiforgery()
                 .Accepts<GreenScreenDto>("multipart/form-data");
-          
+
             app.MapPost("/api/video/colorfilter", ApplyColorFilter)
                 .DisableAntiforgery()
                 .WithName("ApplyColorFilter")
-                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSizeBytes));
 
             app.MapPost("/api/video/replace-audio", ReplaceAudio)
                 .DisableAntiforgery()
-                .WithMetadata(new RequestSizeLimitAttribute(104857600));
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSizeBytes));
 
             app.MapPost("/api/video/reverseVideo", ReverseVideo)
                 .DisableAntiforgery()
-                .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSizeBytes));
 
             app.MapPost("/api/video/timestamp", AddTimestamp)
                 .DisableAntiforgery()
-                .WithMetadata(new RequestSizeLimitAttribute(104857600));
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSizeBytes));
 
             app.MapPost("/api/audio/convert", ConvertAudio)
                 .DisableAntiforgery()
                 .WithName("ConvertAudio")
-                .Accepts<ConvertAudioDto>("multipart/form-data");
+                .Accepts<ConvertAudioDto>("multipart/form-data")
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSizeBytes));
         }
 
-        private static async Task<IResult> AddWatermark(
-            HttpContext context,
-            [FromForm] WatermarkDto dto)
+        private static async Task<IResult> AddWatermark(HttpContext context, [FromForm] WatermarkDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
@@ -72,10 +70,8 @@ namespace FFmpeg.API.Endpoints
 
                 string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
                 string watermarkFileName = await fileService.SaveUploadedFileAsync(dto.WatermarkFile);
-
                 string extension = Path.GetExtension(dto.VideoFile.FileName);
                 string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
-
                 List<string> filesToCleanup = new() { videoFileName, watermarkFileName, outputFileName };
 
                 try
@@ -94,14 +90,12 @@ namespace FFmpeg.API.Endpoints
 
                     if (!result.IsSuccess)
                     {
-                        logger.LogError("FFmpeg command failed: {ErrorMessage}, Command: {Command}",
-                            result.ErrorMessage, result.CommandExecuted);
+                        logger.LogError("FFmpeg command failed: {ErrorMessage}, Command: {Command}", result.ErrorMessage, result.CommandExecuted);
                         return Results.Problem("Failed to add watermark: " + result.ErrorMessage, statusCode: 500);
                     }
 
                     byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
                     _ = fileService.CleanupTempFilesAsync(filesToCleanup);
-
                     return Results.File(fileBytes, "video/mp4", dto.VideoFile.FileName);
                 }
                 catch (Exception ex)
@@ -117,6 +111,7 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
+
         private static async Task<IResult> ReplaceGreenScreen(
                 HttpContext context,
                 [FromForm] GreenScreenDto dto)
@@ -179,9 +174,7 @@ namespace FFmpeg.API.Endpoints
             }
         }
 
-        private static async Task<IResult> ReplaceAudio(
-            HttpContext context,
-            [FromForm] ReplaceAudioDto dto)
+        private static async Task<IResult> ReplaceAudio(HttpContext context, [FromForm] ReplaceAudioDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
@@ -198,8 +191,7 @@ namespace FFmpeg.API.Endpoints
                 string audioFileName = await fileService.SaveUploadedFileAsync(dto.NewAudioFile);
                 string extension = Path.GetExtension(dto.VideoFile.FileName);
                 string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
-
-                List<string> filesToCleanup = new List<string> { videoFileName, audioFileName, outputFileName };
+                List<string> filesToCleanup = new() { videoFileName, audioFileName, outputFileName };
 
                 try
                 {
@@ -213,8 +205,7 @@ namespace FFmpeg.API.Endpoints
 
                     if (!result.IsSuccess)
                     {
-                        logger.LogError("FFmpeg command failed: {ErrorMessage}, Command: {Command}",
-                            result.ErrorMessage, result.CommandExecuted);
+                        logger.LogError("FFmpeg command failed: {ErrorMessage}, Command: {Command}", result.ErrorMessage, result.CommandExecuted);
                         return Results.Problem("Failed to replace audio: " + result.ErrorMessage, statusCode: 500);
                     }
 
@@ -236,7 +227,6 @@ namespace FFmpeg.API.Endpoints
             }
         }
 
-
         private static async Task<IResult> ConvertAudio(
             HttpContext context,
             [FromForm] ConvertAudioDto dto)
@@ -252,6 +242,7 @@ namespace FFmpeg.API.Endpoints
 
             string inputFileName = await fileService.SaveUploadedFileAsync(dto.AudioFile);
             string extension = Path.GetExtension(dto.OutputFileName);
+
             if (string.IsNullOrEmpty(extension))
             {
                 return Results.BadRequest("Output file name must include extension (e.g., .wav)");
@@ -286,9 +277,8 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("Unexpected error: " + ex.Message);
             }
         }
-        private static async Task<IResult> ApplyColorFilter(
-   HttpContext context,
-   [FromForm] ColorFilterDto dto)
+
+        private static async Task<IResult> ApplyColorFilter(HttpContext context, [FromForm] ColorFilterDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
@@ -322,8 +312,7 @@ namespace FFmpeg.API.Endpoints
 
                     if (!result.IsSuccess)
                     {
-                        logger.LogError("FFmpeg color filter command failed: {ErrorMessage}, Command: {Command}",
-                            result.ErrorMessage, result.CommandExecuted);
+                        logger.LogError("FFmpeg color filter command failed: {ErrorMessage}, Command: {Command}", result.ErrorMessage, result.CommandExecuted);
                         return Results.Problem("Failed to apply color filter: " + result.ErrorMessage, statusCode: 500);
                     }
 
@@ -347,8 +336,8 @@ namespace FFmpeg.API.Endpoints
         }
 
         private static async Task<IResult> AddBlurEffect(
-HttpContext context,
-[FromForm] BlurEffectDto dto)
+            HttpContext context,
+            [FromForm] BlurEffectDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
@@ -363,7 +352,7 @@ HttpContext context,
                 string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
                 string extension = Path.GetExtension(dto.VideoFile.FileName);
                 string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
-                List<string> filesToCleanup = new List<string> { videoFileName, outputFileName };
+                List<string> filesToCleanup = new() { videoFileName, outputFileName };
                 try
                 {
                     var command = ffmpegService.CreateBlurEffectCommand();
@@ -414,7 +403,7 @@ HttpContext context,
                 string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
                 string extension = Path.GetExtension(dto.VideoFile.FileName);
                 string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
-                List<string> filesToCleanup = new List<string> { videoFileName, outputFileName };
+                List<string> filesToCleanup = new() { videoFileName, outputFileName };
 
                 try
                 {
@@ -432,8 +421,7 @@ HttpContext context,
                     });
                     if (!result.IsSuccess)
                     {
-                        logger.LogError("FFmpeg timestamp command failed: {ErrorMessage}, Command: {Command}",
-                            result.ErrorMessage, result.CommandExecuted);
+                        logger.LogError("FFmpeg timestamp command failed: {ErrorMessage}, Command: {Command}", result.ErrorMessage, result.CommandExecuted);
                         return Results.Problem("Failed to add timestamp: " + result.ErrorMessage, statusCode: 500);
                     }
                     byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
