@@ -9,7 +9,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 namespace FFmpeg.Infrastructure.Services
 {
     public interface IFFmpegServiceFactory
@@ -20,12 +19,12 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
         ICommand<BorderModel> CreateBorderCommand();
+        ICommand<AnimatedTextModel> CreateAnimatedTextCommand();
         ICommand<GreenScreenModel> CreateGreenScreenCommand();
         ICommand<ColorFilterModel> CreateColorFilterCommand(); 
         ICommand<AudioMixModel> CreateMixAudioCommand();
         ICommand<ReverseVideoModel> ReverseVideoCommand();
     }
-
     public class FFmpegServiceFactory : IFFmpegServiceFactory
     {
         private readonly FFmpegExecutor _executor;
@@ -45,7 +44,6 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new WatermarkCommand(_executor, _commandBuilder);
         }
-                                
         public ICommand<BlurEffectModel> CreateBlurEffectCommand()
         {
             return new BlurEffectComand(_executor, _commandBuilder);
@@ -58,7 +56,6 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new TimestampCommand(_executor, _commandBuilder);
         }
-      
         public ICommand<ConvertAudioModel> CreateConvertAudioCommand()
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
@@ -66,6 +63,10 @@ namespace FFmpeg.Infrastructure.Services
         public ICommand<BorderModel> CreateBorderCommand()
         {
             return new BorderCommand(_executor, _commandBuilder);
+        }
+        public ICommand<AnimatedTextModel> CreateAnimatedTextCommand()
+        {
+            return new AnimatedTextCommand(_executor, _commandBuilder);
         }
         public ICommand<GreenScreenModel> CreateGreenScreenCommand()
         {
@@ -79,7 +80,6 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new MixAudioCommand(_executor, _commandBuilder, new Logger());
         }
-
         public ICommand<ReverseVideoModel> ReverseVideoCommand()
         {
             return new ReverseVideoCommand(_executor, _commandBuilder);
