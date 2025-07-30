@@ -21,15 +21,20 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<MergeVideosModel> CreateMergeVideosCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
+<<<<<<< HEAD
         ICommand<BorderModel> CreateBorderCommand();
         ICommand<ConvertVideoModel> CreateConvertVideoCommand(); 
+=======
+        ICommand<ConvertVideoModel> CreateConvertVideoCommand();
+>>>>>>> 67a8e693f9b5fe18ec8e0df0765026a5c4b79cb2
         ICommand<AnimatedTextModel> CreateAnimatedTextCommand();
         ICommand<GreenScreenModel> CreateGreenScreenCommand();
         ICommand<ColorFilterModel> CreateColorFilterCommand();
         ICommand<AudioMixModel> CreateMixAudioCommand();
         ICommand<ReverseVideoModel> ReverseVideoCommand();
         ICommand<ResizeModel> CreateResizeCommand();
-        ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand(); 
+        ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand();
+        ICommand<SpeedChangeModel> CreateChangeSpeedCommand();
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -125,6 +130,11 @@ namespace FFmpeg.Infrastructure.Services
         public ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand()
         {
             return new BrightnessContrastCommand(_executor, _commandBuilder);
+        }
+
+        public ICommand<SpeedChangeModel> CreateChangeSpeedCommand()
+        {
+            return new SpeedChangeCommand(_executor, _commandBuilder);
         }
     }
 }
