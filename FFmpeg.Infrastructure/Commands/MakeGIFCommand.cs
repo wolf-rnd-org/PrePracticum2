@@ -12,7 +12,7 @@ namespace FFmpeg.Infrastructure.Commands
     public class MakeGIFCommand : BaseCommand, ICommand<GIFModel>
     {
         private readonly ICommandBuilder _commandBuilder;
-
+        
         public MakeGIFCommand(FFmpegExecutor executor, ICommandBuilder commandBuilder)
             : base(executor)
         {
@@ -25,12 +25,12 @@ namespace FFmpeg.Infrastructure.Commands
                 .SetInput(model.InputVideoName)
                 .AddOption("-vf \"fps=10,scale=320:-1\"")
                 .SetOutput(model.OutputVideoName);
-
+                
             if (model.IsVideo)
             {
                 CommandBuilder.SetVideoCodec(model.VideoCodec);
             }
-
+            
             return await RunAsync();
         }
     }

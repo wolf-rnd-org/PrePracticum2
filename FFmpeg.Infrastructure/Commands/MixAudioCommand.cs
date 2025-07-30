@@ -29,7 +29,6 @@ namespace Ffmpeg.Command.Commands
               .SetOutput(model.OutputFile);
 
             _logger.LogInformation($"FFmpeg command: {CommandBuilder.Build()}");
-
             return await RunAsync();
         }
     }

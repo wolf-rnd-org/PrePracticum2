@@ -1,4 +1,4 @@
-using Ffmpeg.Command;
+﻿using Ffmpeg.Command;
 using FFmpeg.API.Endpoints;
 using FFmpeg.Core.Interfaces;
 using FFmpeg.Infrastructure.Services;
@@ -54,9 +54,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 
+
 // Map endpoints
 app.MapEndpoints();         // Video endpoints
 app.MapAudioEndpoints();    // Audio endpoints
-
-app.MapGet("/", () => { return "FFmpeg API is running"; });
-app.Run();
