@@ -62,7 +62,7 @@ namespace FFmpeg.API.Endpoints
           
             app.MapPost("/api/video/brightness-contrast", AdjustBrightnessContrast)
                .DisableAntiforgery()
-               .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSizeBytes));
+               .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
         }
         private static async Task<IResult> AddWatermark(HttpContext context, [FromForm] WatermarkDto dto)
         {
