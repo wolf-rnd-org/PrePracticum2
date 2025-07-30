@@ -1,4 +1,4 @@
-﻿using Ffmpeg.Command;
+using Ffmpeg.Command;
 using Ffmpeg.Command.Commands;
 using FFmpeg.Core.Models;
 using FFmpeg.Infrastructure.Commands;
@@ -18,20 +18,20 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<BlurEffectModel> CreateBlurEffectCommand();
         ICommand<ReplaceAudioModel> CreateReplaceAudioCommand();
         ICommand<TimestampModel> CreateTimestampCommand();
+        ICommand<MergeVideosModel> CreateMergeVideosCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
-        ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand();
         ICommand<AnimatedTextModel> CreateAnimatedTextCommand();
         ICommand<GreenScreenModel> CreateGreenScreenCommand();
-        ICommand<ColorFilterModel> CreateColorFilterCommand();
+        ICommand<ColorFilterModel> CreateColorFilterCommand(); 
         ICommand<AudioMixModel> CreateMixAudioCommand();
         ICommand<ReverseVideoModel> ReverseVideoCommand();
         ICommand<ResizeModel> CreateResizeCommand();
+        ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand();
     }
     public class FFmpegServiceFactory : IFFmpegServiceFactory
     {
         private readonly FFmpegExecutor _executor;
         private readonly ICommandBuilder _commandBuilder;
-
         public FFmpegServiceFactory(IConfiguration configuration, ILogger logger = null)
         {
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
@@ -62,13 +62,13 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new TimestampCommand(_executor, _commandBuilder);
         }
+        public ICommand<MergeVideosModel> CreateMergeVideosCommand()
+        {
+            return new MergeVideosCommand(_executor, _commandBuilder);
+        }
         public ICommand<ConvertAudioModel> CreateConvertAudioCommand()
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
-        }
-        public ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand()
-        {
-            return new BrightnessContrastCommand(_executor, _commandBuilder);
         }
         public ICommand<AnimatedTextModel> CreateAnimatedTextCommand()
         {
@@ -93,6 +93,10 @@ namespace FFmpeg.Infrastructure.Services
         public ICommand<ResizeModel> CreateResizeCommand()
         {
             return new ResizeCommand(_executor, _commandBuilder);
+        }
+        public ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand()
+        {
+            return new BrightnessContrastCommand(_executor, _commandBuilder);
         }
     }
 }
