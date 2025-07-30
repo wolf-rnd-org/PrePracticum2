@@ -10,7 +10,7 @@ using FFmpeg.Core.Interfaces;
 using FFmpeg.Core.Models;
 using FFmpeg.Infrastructure.Services;
 using Microsoft.Extensions.Logging;
-using FFmpeg.Infrastructure.Command;
+using FFmpeg.Infrastructure.Commands;
 
 namespace FFmpeg.API.Endpoints
 {
@@ -28,7 +28,6 @@ namespace FFmpeg.API.Endpoints
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
 
-                .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
             app.MapPost("/api/video/blurEffect", AddBlurEffect)
                .DisableAntiforgery()
                .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
@@ -323,13 +322,10 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("Unexpected error: " + ex.Message);
             }
         }
-        private static async Task<IResult> AddTimestamp(
-            HttpContext context,
-            [FromForm] TimestampDto dto)
 
           private static async Task<IResult> ApplyColorFilter(
-   HttpContext context,
-   [FromForm] ColorFilterDto dto)
+            HttpContext context,
+            [FromForm] ColorFilterDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
