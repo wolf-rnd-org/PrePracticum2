@@ -31,8 +31,6 @@ namespace FFmpeg.API.Endpoints
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(maxVideo));
 
-                .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
-
             app.MapPost("/api/video/split-screen", SplitScreen)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600)); 
