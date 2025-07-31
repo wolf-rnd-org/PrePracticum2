@@ -21,6 +21,7 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<MergeVideosModel> CreateMergeVideosCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
+        ICommand<CutSectionModel> CreateCutCommand();
         ICommand<BorderModel> CreateBorderCommand();
         ICommand<ConvertVideoModel> CreateConvertVideoCommand(); 
         ICommand<AnimatedTextModel> CreateAnimatedTextCommand();
@@ -32,7 +33,6 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand();
         ICommand<SpeedChangeModel> CreateChangeSpeedCommand();
         ICommand<SplitScreenModel> CreateSplitScreenCommand();
-
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -89,6 +89,10 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
         }
+        public ICommand<CutSectionModel> CreateCutCommand()
+        {
+            return new CutSectionCommand(_executor, _commandBuilder);
+        }
         public ICommand<BorderModel> CreateBorderCommand()
         {
             return new BorderCommand(_executor, _commandBuilder);
@@ -113,7 +117,6 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new ColorFilterCommand(_executor, _commandBuilder);
         }
-
         public ICommand<AudioMixModel> CreateMixAudioCommand()
         {
             return new MixAudioCommand(_executor, _commandBuilder, new Logger());
