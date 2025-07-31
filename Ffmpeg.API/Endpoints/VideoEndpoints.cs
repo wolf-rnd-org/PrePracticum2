@@ -28,7 +28,6 @@ namespace FFmpeg.API.Endpoints
             app.MapPost("/api/video/split-screen", SplitScreen)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(104857600)); 
-                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
 
             app.MapPost("/api/video/blurEffect", AddBlurEffect)
                 .DisableAntiforgery()
@@ -738,13 +737,9 @@ namespace FFmpeg.API.Endpoints
             }
         }
 
-<<<<<<< HEAD
         private static async Task<IResult> SplitScreen(
-             HttpContext context,
-             [FromForm] SplitScreenDto dto)
-=======
-        private static async Task<IResult> ChangeResolution(HttpContext context, [FromForm] ResizeDto dto)
->>>>>>> origin/master
+    HttpContext context,
+    [FromForm] SplitScreenDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
@@ -752,10 +747,61 @@ namespace FFmpeg.API.Endpoints
 
             try
             {
-<<<<<<< HEAD
                 if (dto.VideoFile == null)
                     return Results.BadRequest("Video file is required");
-=======
+
+                string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
+                string extension = Path.GetExtension(dto.VideoFile.FileName);
+                string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
+
+                List<string> filesToCleanup = new() { videoFileName, outputFileName };
+
+                try
+                {
+                    var command = ffmpegService.CreateSplitScreenCommand();
+
+                    var result = await command.ExecuteAsync(new SplitScreenModel
+                    {
+                        InputFile = videoFileName,
+                        OutputFile = outputFileName,
+                        DuplicateCount = dto.DuplicateCount,
+                        VideoCodec = "libx264"
+                    });
+
+                    if (!result.IsSuccess)
+                    {
+                        logger.LogError("FFmpeg command failed: {ErrorMessage}, Command: {Command}",
+                            result.ErrorMessage, result.CommandExecuted);
+                        return Results.Problem("Failed to create split screen: " + result.ErrorMessage, statusCode: 500);
+                    }
+
+                    byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+
+                    return Results.File(fileBytes, "video/mp4", dto.VideoFile.FileName);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error processing split screen request");
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in SplitScreen endpoint");
+                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
+            }
+        }
+
+        private static async Task<IResult> ChangeResolution(HttpContext context, [FromForm] ResizeDto dto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+            try
+            {
                 if (dto.InputFile == null || dto.Width <= 0 || dto.Height <= 0)
                 {
                     return Results.BadRequest("Video file and valid resolution (Width and Height) are required.");
@@ -805,6 +851,60 @@ namespace FFmpeg.API.Endpoints
             }
         }
 
+        private static async Task<IResult> ChangeVideoSpeed(HttpContext context, [FromForm] ChangeSpeedDto dto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+            try
+            {
+                if (dto.VideoFile == null || dto.SpeedFactor <= 0)
+                {
+                    return Results.BadRequest("Video file and speed factor are required.");
+                }
+
+                string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
+                string extension = Path.GetExtension(dto.VideoFile.FileName);
+                string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
+
+                List<string> filesToCleanup = new() { videoFileName, outputFileName };
+
+                try
+                {
+                    var command = ffmpegService.CreateChangeSpeedCommand();
+                    var result = await command.ExecuteAsync(new SpeedChangeModel
+                    {
+                        InputFile = videoFileName,
+                        OutputFile = outputFileName,
+                        SpeedFactor = dto.SpeedFactor
+                    });
+
+                    if (!result.IsSuccess)
+                    {
+                        logger.LogError("FFmpeg speed change failed: {ErrorMessage}, Command: {Command}",
+                            result.ErrorMessage, result.CommandExecuted);
+                        return Results.Problem("Failed to change video speed: " + result.ErrorMessage, statusCode: 500);
+                    }
+
+                    byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    return Results.File(fileBytes, "video/mp4", dto.VideoFile.FileName);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error processing change video speed request");
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in ChangeVideoSpeed endpoint");
+                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
+            }
+        }
+
         private static string GetContentType(string extension)
         {
             return extension.ToLowerInvariant() switch
@@ -820,93 +920,5 @@ namespace FFmpeg.API.Endpoints
                 _ => "video/mp4"
             };
         }
-
-        private static async Task<IResult> ChangeVideoSpeed(HttpContext context, [FromForm] ChangeSpeedDto dto)
-        {
-            var fileService = context.RequestServices.GetRequiredService<IFileService>();
-            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
-            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-
-            try
-            {
-                if (dto.VideoFile == null || dto.SpeedFactor <= 0)
-                {
-                    return Results.BadRequest("Video file and speed factor are required.");
-                }
->>>>>>> origin/master
-
-                string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
-                string extension = Path.GetExtension(dto.VideoFile.FileName);
-                string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
-
-                List<string> filesToCleanup = new() { videoFileName, outputFileName };
-
-                try
-                {
-<<<<<<< HEAD
-                    var command = ffmpegService.CreateSplitScreenCommand();
-
-                    var result = await command.ExecuteAsync(new SplitScreenModel
-                    {
-                        InputFile = videoFileName,
-                        OutputFile = outputFileName,
-                        DuplicateCount = dto.DuplicateCount,
-                        VideoCodec = "libx264"
-=======
-                    var command = ffmpegService.CreateChangeSpeedCommand();
-                    var result = await command.ExecuteAsync(new SpeedChangeModel
-                    {
-                        InputFile = videoFileName,
-                        OutputFile = outputFileName,
-                        SpeedFactor = dto.SpeedFactor
->>>>>>> origin/master
-                    });
-
-                    if (!result.IsSuccess)
-                    {
-<<<<<<< HEAD
-                        logger.LogError("FFmpeg command failed: {ErrorMessage}, Command: {Command}",
-                            result.ErrorMessage, result.CommandExecuted);
-                        return Results.Problem("Failed to create split screen: " + result.ErrorMessage, statusCode: 500);
-=======
-                        logger.LogError("FFmpeg speed change failed: {ErrorMessage}, Command: {Command}",
-                            result.ErrorMessage, result.CommandExecuted);
-                        return Results.Problem("Failed to change video speed: " + result.ErrorMessage, statusCode: 500);
->>>>>>> origin/master
-                    }
-
-                    byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
-                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/master
-                    return Results.File(fileBytes, "video/mp4", dto.VideoFile.FileName);
-                }
-                catch (Exception ex)
-                {
-<<<<<<< HEAD
-                    logger.LogError(ex, "Error processing split screen request");
-=======
-                    logger.LogError(ex, "Error processing change video speed request");
->>>>>>> origin/master
-                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
-                    throw;
-                }
-            }
-            catch (Exception ex)
-            {
-<<<<<<< HEAD
-                logger.LogError(ex, "Error in SplitScreen endpoint");
-                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
-            }
-        }
-
-=======
-                logger.LogError(ex, "Error in ChangeVideoSpeed endpoint");
-                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
-            }
-        }
->>>>>>> origin/master
     }
 }
