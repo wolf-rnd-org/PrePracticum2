@@ -1,6 +1,5 @@
 using Ffmpeg.Command;
 using Ffmpeg.Command.Commands;
-
 using FFmpeg.Core.Models;
 using FFmpeg.Infrastructure.Commands;
 using Microsoft.Extensions.Configuration;
@@ -118,7 +117,6 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new ColorFilterCommand(_executor, _commandBuilder);
         }
-
         public ICommand<AudioMixModel> CreateMixAudioCommand()
         {
             return new MixAudioCommand(_executor, _commandBuilder, new Logger());
