@@ -31,6 +31,8 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<ResizeModel> CreateResizeCommand();
         ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand();
         ICommand<SpeedChangeModel> CreateChangeSpeedCommand();
+        ICommand<SplitScreenModel> CreateSplitScreenCommand();
+
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -54,6 +56,10 @@ namespace FFmpeg.Infrastructure.Services
             return new WatermarkCommand(_executor, _commandBuilder);
         }
 
+        public ICommand<SplitScreenModel> CreateSplitScreenCommand()
+        {
+            return new SplitScreenCommand(_executor, _commandBuilder);
+        }
         public ICommand<ThumbnailModel> CreateThumbnailCommand()
         {
             return new ThumbnailCommand(_executor, _commandBuilder);
