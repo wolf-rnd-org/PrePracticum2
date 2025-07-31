@@ -17,11 +17,7 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<WatermarkModel> CreateWatermarkCommand();
 
         ICommand<RemoveAudioModel> CreateRemoveAudioCommand();
-
-        ICommand<TimestampModel> CreateTimestampCommand();
       
-        ICommand<ConvertAudioModel> CreateConvertAudioCommand();
-
         ICommand<ThumbnailModel> CreateThumbnailCommand();
         ICommand<BlurEffectModel> CreateBlurEffectCommand();
         ICommand<ReplaceAudioModel> CreateReplaceAudioCommand();
