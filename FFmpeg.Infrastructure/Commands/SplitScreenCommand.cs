@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Ffmpeg.Command.Commands;
+﻿using Ffmpeg.Command.Commands;
+using FFmpeg.Core.Models;
 using FFmpeg.Infrastructure.Services;
 
 namespace FFmpeg.Infrastructure.Commands

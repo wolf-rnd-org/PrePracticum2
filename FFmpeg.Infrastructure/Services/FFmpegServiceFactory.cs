@@ -30,6 +30,8 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<ResizeModel> CreateResizeCommand();
         ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand();
         ICommand<SpeedChangeModel> CreateChangeSpeedCommand();
+        ICommand<SplitScreenModel> CreateSplitScreenCommand();
+
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
