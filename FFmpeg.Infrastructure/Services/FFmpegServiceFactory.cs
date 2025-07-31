@@ -21,7 +21,8 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<MergeVideosModel> CreateMergeVideosCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
-        ICommand<ConvertVideoModel> CreateConvertVideoCommand();
+        ICommand<BorderModel> CreateBorderCommand();
+        ICommand<ConvertVideoModel> CreateConvertVideoCommand(); 
         ICommand<AnimatedTextModel> CreateAnimatedTextCommand();
         ICommand<GreenScreenModel> CreateGreenScreenCommand();
         ICommand<ColorFilterModel> CreateColorFilterCommand();
@@ -81,6 +82,10 @@ namespace FFmpeg.Infrastructure.Services
         public ICommand<ConvertAudioModel> CreateConvertAudioCommand()
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
+        }
+        public ICommand<BorderModel> CreateBorderCommand()
+        {
+            return new BorderCommand(_executor, _commandBuilder);
         }
 
         public ICommand<ConvertVideoModel> CreateConvertVideoCommand()

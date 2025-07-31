@@ -21,6 +21,8 @@ namespace FFmpeg.API.Endpoints
 
         public static void MapEndpoints(this WebApplication app)
         {
+            const int MaxUploadSize = 104_857_600;
+
             app.MapPost("/api/video/watermark", AddWatermark)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
@@ -64,6 +66,10 @@ namespace FFmpeg.API.Endpoints
                 .Accepts<ConvertAudioDto>("multipart/form-data")
                 .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
 
+            app.MapPost("/api/video/add-border", AddBorder)
+                .DisableAntiforgery()
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
+
             app.MapPost("/api/video/change-speed", ChangeVideoSpeed)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
@@ -75,6 +81,7 @@ namespace FFmpeg.API.Endpoints
             app.MapPost("/api/video/resize", ChangeResolution)
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
+
         }
 
         private static async Task<IResult> ConvertVideo(
@@ -526,7 +533,7 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-
+       
         private static async Task<IResult> AddTimestamp(HttpContext context, [FromForm] TimestampDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
@@ -591,7 +598,7 @@ namespace FFmpeg.API.Endpoints
             {
                 if (dto.VideoFile == null || dto.VideoFile.Length == 0)
                 {
-                    return Results.BadRequest("Video file is required");
+                    return Results.BadRequest("Video file is required.");
                 }
 
                 string inputFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
@@ -633,6 +640,63 @@ namespace FFmpeg.API.Endpoints
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled error in AdjustBrightnessContrast endpoint");
+                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
+            }
+        }
+
+        private static async Task<IResult> AddBorder(
+            HttpContext context,
+            [FromForm] BorderDto dto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+            try
+            {
+                if (dto.VideoFile == null)
+                {
+                    return Results.BadRequest("Video file is required.");
+                }
+
+                string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
+                string extension = Path.GetExtension(dto.VideoFile.FileName);
+                string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
+
+                List<string> filesToCleanup = new() { videoFileName, outputFileName };
+
+                try
+                {
+                    var command = ffmpegService.CreateBorderCommand();
+                    var result = await command.ExecuteAsync(new BorderModel
+                    {
+                        InputFile = videoFileName,
+                        OutputFile = outputFileName,
+                        FrameColor = string.IsNullOrWhiteSpace(dto.FrameColor) ? "black" : dto.FrameColor
+                    });
+
+                    if (!result.IsSuccess)
+                    {
+                        logger.LogError("FFmpeg border command failed: {ErrorMessage}, Command: {Command}",
+                            result.ErrorMessage, result.CommandExecuted);
+                        return Results.Problem("Failed to add border: " + result.ErrorMessage, statusCode: 500);
+                    }
+
+                    byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+
+                    return Results.File(fileBytes, "video/mp4", dto.VideoFile.FileName);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error processing border request");
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in AddBorder endpoint");
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
