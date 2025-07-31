@@ -57,7 +57,6 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new SplitScreenCommand(_executor, _commandBuilder);
         }
-
         public ICommand<ThumbnailModel> CreateThumbnailCommand()
         {
             return new ThumbnailCommand(_executor, _commandBuilder);
@@ -87,7 +86,6 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
         }
-<<<<<<< HEAD
 
         public ICommand<ConvertVideoModel> CreateConvertVideoCommand()
         {
@@ -133,7 +131,5 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new SpeedChangeCommand(_executor, _commandBuilder);
         }
-=======
->>>>>>> f02b6ca0635d49cfdef84ba4bda5f6e93d1d7e33
     }
 }
