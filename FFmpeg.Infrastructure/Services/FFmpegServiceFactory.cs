@@ -15,10 +15,13 @@ namespace FFmpeg.Infrastructure.Services
     public interface IFFmpegServiceFactory
     {
         ICommand<WatermarkModel> CreateWatermarkCommand();
+      
+        ICommand<RemoveAudioModel> CreateRemoveAudioCommand();
+
+        ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<ThumbnailModel> CreateThumbnailCommand();
         ICommand<BlurEffectModel> CreateBlurEffectCommand();
         ICommand<ReplaceAudioModel> CreateReplaceAudioCommand();
-        ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<MergeVideosModel> CreateMergeVideosCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
         ICommand<CutSectionModel> CreateCutCommand();
@@ -54,6 +57,11 @@ namespace FFmpeg.Infrastructure.Services
         public ICommand<WatermarkModel> CreateWatermarkCommand()
         {
             return new WatermarkCommand(_executor, _commandBuilder);
+        }
+
+        public ICommand<RemoveAudioModel> CreateRemoveAudioCommand()
+        {
+            return new RemoveAudioCommand(_executor, _commandBuilder);
         }
 
         public ICommand<SplitScreenModel> CreateSplitScreenCommand()
