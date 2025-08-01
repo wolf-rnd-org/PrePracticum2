@@ -1,3 +1,8 @@
+using FFmpeg.API.DTOs;
+using FFmpeg.Core.Interfaces;
+using FFmpeg.Core.Models;
+using FFmpeg.Infrastructure.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
@@ -69,6 +74,17 @@ namespace FFmpeg.API.Endpoints
 
             app.MapPost("/api/video/timestamp", AddTimestamp)
                 .DisableAntiforgery()
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
+
+            app.MapPost("/api/audio/convert", ConvertAudio)
+                .DisableAntiforgery()
+                .WithName("ConvertAudio")
+                .Accepts<ConvertAudioDto>("multipart/form-data");
+
+            app.MapPost("/api/video/cut", CutVideo)
+               .DisableAntiforgery()
+               .WithMetadata(new RequestSizeLimitAttribute(104857600))
+                .Accepts<ConvertAudioDto>("multipart/form-data")
                 .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
 
             app.MapPost("/api/video/add-border", AddBorder)
@@ -461,6 +477,111 @@ namespace FFmpeg.API.Endpoints
             }
         }
 
+
+        private static async Task<IResult> ConvertAudio(HttpContext context, [FromForm] ConvertAudioDto dto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+            if (dto.AudioFile == null || string.IsNullOrEmpty(dto.OutputFileName))
+            {
+                return Results.BadRequest("Audio file and output name are required");
+            }
+
+            string inputFileName = await fileService.SaveUploadedFileAsync(dto.AudioFile);
+            string extension = Path.GetExtension(dto.OutputFileName);
+            if (string.IsNullOrEmpty(extension))
+            {
+                return Results.BadRequest("Output file name must include extension (e.g., .wav)");
+            }
+
+            string outputFileName = dto.OutputFileName;
+            List<string> filesToCleanup = new() { inputFileName, outputFileName };
+
+            try
+            {
+                var command = ffmpegService.CreateConvertAudioCommand();
+                var result = await command.ExecuteAsync(new ConvertAudioModel
+                {
+                    InputFile = inputFileName,
+                    OutputFile = outputFileName
+                });
+
+                if (!result.IsSuccess)
+                {
+                    logger.LogError("Audio conversion failed: {Error}", result.ErrorMessage);
+                    return Results.Problem("Audio conversion failed: " + result.ErrorMessage);
+                }
+
+                byte[] output = await fileService.GetOutputFileAsync(outputFileName);
+                _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                return Results.File(output, "audio/wav", outputFileName);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error converting audio");
+                _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                return Results.Problem("Unexpected error: " + ex.Message);
+            }
+        }
+        private static async Task<IResult> CutVideo(
+       HttpContext context,
+       [FromForm] CutVideoDto dto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+            if (dto.VideoFile == null)
+                return Results.BadRequest("Video file is required");
+
+            string inputName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
+
+            string extension = ".mp4";
+            string outputName;
+            if (!string.IsNullOrWhiteSpace(dto.OutputFileName))
+            {
+                if (Path.GetExtension(dto.OutputFileName).ToLower() != extension)
+                    outputName = dto.OutputFileName + extension;
+                else
+                    outputName = dto.OutputFileName;
+            }
+            else
+            {
+                outputName = await fileService.GenerateUniqueFileNameAsync(extension);
+            }
+
+            List<string> filesToCleanup = new() { inputName, outputName };
+            try
+            {
+                var command = ffmpegService.CreateCutCommand();
+                var result = await command.ExecuteAsync(new CutSectionModel
+                {
+                    InputFilePath = inputName,
+                    OutputFilePath = outputName,
+                    StartTime = dto.StartTime,
+                    EndTime = dto.EndTime
+                });
+
+                if (!result.IsSuccess)
+                {
+                    logger.LogError("FFmpeg cut failed: {Error}", result.ErrorMessage);
+                    return Results.Problem("Video cut failed: " + result.ErrorMessage, statusCode: 500);
+                }
+
+                byte[] fileBytes = await fileService.GetOutputFileAsync(outputName);
+                _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+
+                return Results.File(fileBytes, "video/mp4", outputName);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in CutVideo");
+                _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                return Results.Problem("Error: " + ex.Message, statusCode: 500);
+            }
+        }
         private static async Task<IResult> ApplyColorFilter(HttpContext context, [FromForm] ColorFilterDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
@@ -473,14 +594,10 @@ namespace FFmpeg.API.Endpoints
                 {
                     return Results.BadRequest("Video file is required");
                 }
-
                 string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
                 string extension = Path.GetExtension(dto.VideoFile.FileName);
-                string outputFileName = string.IsNullOrEmpty(dto.OutputFileName)
-                    ? await fileService.GenerateUniqueFileNameAsync(extension)
-                    : dto.OutputFileName;
-
-                List<string> filesToCleanup = new() { videoFileName, outputFileName };
+                string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
+                List<string> filesToCleanup = new List<string> { videoFileName, outputFileName };
 
                 try
                 {
@@ -533,7 +650,6 @@ namespace FFmpeg.API.Endpoints
                 string extension = Path.GetExtension(dto.VideoFile.FileName);
                 string outputFileName = await fileService.GenerateUniqueFileNameAsync(extension);
                 List<string> filesToCleanup = new() { videoFileName, outputFileName };
-
                 try
                 {
                     var command = ffmpegService.CreateTimestampCommand();
@@ -571,7 +687,6 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-
         private static async Task<IResult> AdjustBrightnessContrast(HttpContext context, [FromForm] BrightnessContrastDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
