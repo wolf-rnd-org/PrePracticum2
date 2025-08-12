@@ -36,9 +36,9 @@ namespace FFmpeg.API.Endpoints
             app.MapPost("/api/video/gif", CreateGif)
                 .DisableAntiforgery()
                 .Accepts<GifDto>("multipart/form-data");
-             app.MapPost("/api/video/gif", CreateGif)
-                .DisableAntiforgery()
-                .Accepts<GifDto>("multipart/form-data");
+            app.MapPost("/api/video/gif", CreateGif)
+               .DisableAntiforgery()
+               .Accepts<GifDto>("multipart/form-data");
 
             app.MapPost("/api/video/split-screen", SplitScreen)
                 .DisableAntiforgery()
@@ -1155,4 +1155,5 @@ namespace FFmpeg.API.Endpoints
         }
 
 
+    }
 }
