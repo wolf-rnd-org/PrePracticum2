@@ -10,12 +10,15 @@ namespace FFmpeg.API.Endpoints
 {
     public static class AudioEndPoints
     {
+        private const int MaxUploadSize = 104_857_600; // 100 MB
+
         public static void MapAudioEndpoints(this WebApplication app)
         {
             app.MapPost("/api/audio/mix", MixAudio)
-            .DisableAntiforgery()
-                .WithMetadata(new RequestSizeLimitAttribute(104857600));
+                .DisableAntiforgery()
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
         }
+
         private static async Task<IResult> MixAudio(HttpContext context, [FromForm] AudioMixDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
@@ -40,9 +43,9 @@ namespace FFmpeg.API.Endpoints
                     var command = ffmpegService.CreateMixAudioCommand();
                     var result = await command.ExecuteAsync(new AudioMixModel
                     {
-                        InputFile1 = fileService.GetFullInputPath(file1),
-                        InputFile2 = fileService.GetFullInputPath(file2),
-                        OutputFile = fileService.GetFullOutputPath(outputFile)
+                        InputFile1 = file1,
+                        InputFile2 = file2,
+                        OutputFile = outputFile
                     });
 
                     if (!result.IsSuccess)

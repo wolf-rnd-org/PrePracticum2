@@ -6,7 +6,14 @@ using System.Threading.Tasks;
 
 namespace FFmpeg.Core.Models
 {
-    internal class GreenScreenModel
+    public class GreenScreenModel
     {
+        public string InputFile { get; set; }
+        public string BackgroundFile { get; set; }
+        public string OutputFile { get; set; }
+        public double Similarity { get; set; } = 0.1;
+        public double Blend { get; set; } = 0.2;
+        public string ChromaColor { get; set; } = "0x00FF00";
+        public string VideoCodec { get; set; } = "libx264";
     }
 }
