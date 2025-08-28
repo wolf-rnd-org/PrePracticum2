@@ -17,11 +17,10 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<WatermarkModel> CreateWatermarkCommand();
 
         ICommand<RemoveAudioModel> CreateRemoveAudioCommand();
-      
+        ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<ThumbnailModel> CreateThumbnailCommand();
         ICommand<BlurEffectModel> CreateBlurEffectCommand();
         ICommand<ReplaceAudioModel> CreateReplaceAudioCommand();
-        ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<MergeVideosModel> CreateMergeVideosCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
         ICommand<ColorFilterModel> CreateColorFilterCommand(); 
@@ -63,7 +62,9 @@ namespace FFmpeg.Infrastructure.Services
         public ICommand<RemoveAudioModel> CreateRemoveAudioCommand()
         {
             return new RemoveAudioCommand(_executor, _commandBuilder);
-        } 
+        }
+
+        
         public ICommand<SplitScreenModel> CreateSplitScreenCommand()
         {
             return new SplitScreenCommand(_executor, _commandBuilder);
