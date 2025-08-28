@@ -24,18 +24,20 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<TimestampModel> CreateTimestampCommand();
         ICommand<MergeVideosModel> CreateMergeVideosCommand();
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
+        ICommand<ColorFilterModel> CreateColorFilterCommand(); 
+        ICommand<AudioMixModel> CreateMixAudioCommand();
+        ICommand<GIFModel> CreateGifCommand(); 
         ICommand<CutSectionModel> CreateCutCommand();
         ICommand<BorderModel> CreateBorderCommand();
         ICommand<ConvertVideoModel> CreateConvertVideoCommand(); 
         ICommand<AnimatedTextModel> CreateAnimatedTextCommand();
         ICommand<GreenScreenModel> CreateGreenScreenCommand();
-        ICommand<ColorFilterModel> CreateColorFilterCommand();
-        ICommand<AudioMixModel> CreateMixAudioCommand();
         ICommand<ReverseVideoModel> ReverseVideoCommand();
         ICommand<ResizeModel> CreateResizeCommand();
         ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand();
         ICommand<SpeedChangeModel> CreateChangeSpeedCommand();
         ICommand<SplitScreenModel> CreateSplitScreenCommand();
+
     }
 
     public class FFmpegServiceFactory : IFFmpegServiceFactory
@@ -53,7 +55,6 @@ namespace FFmpeg.Infrastructure.Services
             _executor = new FFmpegExecutor(ffmpegPath, logOutput, logger);
             _commandBuilder = new CommandBuilder(configuration);
         }
-
         public ICommand<WatermarkModel> CreateWatermarkCommand()
         {
             return new WatermarkCommand(_executor, _commandBuilder);
@@ -96,6 +97,11 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new ConvertAudioCommand(_executor, _commandBuilder);
         }
+
+        public ICommand<GIFModel> CreateGifCommand()
+        {
+            return new MakeGIFCommand(_executor, _commandBuilder);  
+        }
         public ICommand<CutSectionModel> CreateCutCommand()
         {
             return new CutSectionCommand(_executor, _commandBuilder);
@@ -104,7 +110,6 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new BorderCommand(_executor, _commandBuilder);
         }
-
         public ICommand<ConvertVideoModel> CreateConvertVideoCommand()
         {
             return new ConvertVideoCommand(_executor, _commandBuilder);
@@ -120,25 +125,24 @@ namespace FFmpeg.Infrastructure.Services
             return new GreenScreenReplacerCommand(_executor, _commandBuilder);
         }
 
+
         public ICommand<ColorFilterModel> CreateColorFilterCommand()
         {
             return new ColorFilterCommand(_executor, _commandBuilder);
         }
+
         public ICommand<AudioMixModel> CreateMixAudioCommand()
         {
             return new MixAudioCommand(_executor, _commandBuilder, new Logger());
         }
-
         public ICommand<ReverseVideoModel> ReverseVideoCommand()
         {
             return new ReverseVideoCommand(_executor, _commandBuilder);
         }
-
         public ICommand<ResizeModel> CreateResizeCommand()
         {
             return new ResizeCommand(_executor, _commandBuilder);
         }
-
         public ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand()
         {
             return new BrightnessContrastCommand(_executor, _commandBuilder);
@@ -148,5 +152,7 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new SpeedChangeCommand(_executor, _commandBuilder);
         }
+
+
     }
 }
