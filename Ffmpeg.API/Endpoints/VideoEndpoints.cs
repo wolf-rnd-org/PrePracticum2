@@ -1,4 +1,3 @@
-
 using FFmpeg.API.DTOs;
 using FFmpeg.Core.Interfaces;
 using FFmpeg.Core.Models;
@@ -6,17 +5,12 @@ using FFmpeg.Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using FFmpeg.Infrastructure.Commands;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using FFmpeg.API.DTOs;
-using FFmpeg.Core.Interfaces;
-using FFmpeg.Core.Models;
-using FFmpeg.Infrastructure.Services;
-using Microsoft.Extensions.Logging;
-using FFmpeg.Infrastructure.Commands;
 
 namespace FFmpeg.API.Endpoints
 {
@@ -40,14 +34,9 @@ namespace FFmpeg.API.Endpoints
                 .Accepts<ConvertAudioDto>("multipart/form-data")
                 .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
 
-                .WithMetadata(new RequestSizeLimitAttribute(104857600)); // 100 MB
             app.MapPost("/api/video/gif", CreateGif)
                 .DisableAntiforgery()
                 .Accepts<GifDto>("multipart/form-data");
-             app.MapPost("/api/video/gif", CreateGif)
-                .DisableAntiforgery()
-                .Accepts<GifDto>("multipart/form-data");
-
 
             app.MapPost("/api/video/split-screen", SplitScreen)
                 .DisableAntiforgery()
@@ -86,16 +75,10 @@ namespace FFmpeg.API.Endpoints
                 .DisableAntiforgery()
                 .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
 
-            app.MapPost("/api/audio/convert", ConvertAudio)
-                .DisableAntiforgery()
-                .WithName("ConvertAudio")
-                .Accepts<ConvertAudioDto>("multipart/form-data");
-
             app.MapPost("/api/video/cut", CutVideo)
-               .DisableAntiforgery()
-               .WithMetadata(new RequestSizeLimitAttribute(104857600))
-                .Accepts<ConvertAudioDto>("multipart/form-data")
-                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize));
+                .DisableAntiforgery()
+                .WithMetadata(new RequestSizeLimitAttribute(MaxUploadSize))
+                .Accepts<CutVideoDto>("multipart/form-data");
 
             app.MapPost("/api/video/add-border", AddBorder)
                 .DisableAntiforgery()
@@ -175,75 +158,6 @@ namespace FFmpeg.API.Endpoints
         }
 
         private static async Task<IResult> RemoveAudio(HttpContext context, [FromForm] AudioRemovalDto dto)
-
-
-        private static async Task<IResult> CreateGif(
-            HttpContext context,
-            [FromForm] GifDto dto)
-        {
-            var fileService = context.RequestServices.GetRequiredService<IFileService>();
-            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
-            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-
-            try
-            {
-                if (dto.VideoFile == null)
-                {
-                    return Results.BadRequest("Video file is required");
-                }
-
-
-
-                string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
-                string outputFileName = await fileService.GenerateUniqueFileNameAsync(".gif");
-
-                List<string> filesToCleanup = new() { videoFileName, outputFileName };
-
-                try
-                {
-                    var command = ffmpegService.CreateGifCommand();
-                    var result = await command.ExecuteAsync(new GIFModel
-                    {
-                        InputVideoName = videoFileName,
-                        OutputVideoName = outputFileName
-                       
-                    });
-
-                    if (!result.IsSuccess)
-                    {
-                        logger.LogError("FFmpeg command failed: {ErrorMessage}, Command: {Command}",
-                            result.ErrorMessage, result.CommandExecuted);
-                        return Results.Problem("Failed to create GIF: " + result.ErrorMessage, statusCode: 500);
-                    }
-
-                    byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
-                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
-
-                    return Results.File(fileBytes, "image/gif", Path.GetFileName(outputFileName));
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Error processing GIF request");
-                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
-                    throw;
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error in CreateGif endpoint");
-                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
-            }
-
-        }
-
-
-
-        // ---------- AUDIO ----------
-
-
-
-        private static async Task<IResult> AddWatermark(HttpContext context, [FromForm] WatermarkDto dto)
-
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
@@ -286,7 +200,59 @@ namespace FFmpeg.API.Endpoints
             }
         }
 
-      
+        private static async Task<IResult> CreateGif(HttpContext context, [FromForm] GifDto dto)
+        {
+            var fileService = context.RequestServices.GetRequiredService<IFileService>();
+            var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+            try
+            {
+                if (dto.VideoFile == null)
+                {
+                    return Results.BadRequest("Video file is required");
+                }
+
+                string videoFileName = await fileService.SaveUploadedFileAsync(dto.VideoFile);
+                string outputFileName = await fileService.GenerateUniqueFileNameAsync(".gif");
+
+                List<string> filesToCleanup = new() { videoFileName, outputFileName };
+
+                try
+                {
+                    var command = ffmpegService.CreateGifCommand();
+                    var result = await command.ExecuteAsync(new GIFModel
+                    {
+                        InputVideoName = videoFileName,
+                        OutputVideoName = outputFileName
+                    });
+
+                    if (!result.IsSuccess)
+                    {
+                        logger.LogError("FFmpeg command failed: {ErrorMessage}, Command: {Command}",
+                            result.ErrorMessage, result.CommandExecuted);
+                        return Results.Problem("Failed to create GIF: " + result.ErrorMessage, statusCode: 500);
+                    }
+
+                    byte[] fileBytes = await fileService.GetOutputFileAsync(outputFileName);
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+
+                    return Results.File(fileBytes, "image/gif", Path.GetFileName(outputFileName));
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error processing GIF request");
+                    _ = fileService.CleanupTempFilesAsync(filesToCleanup);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in CreateGif endpoint");
+                return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
+            }
+        }
+
         private static async Task<IResult> CreateThumbnail(HttpContext context, [FromForm] ThumbnailDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
@@ -509,7 +475,6 @@ namespace FFmpeg.API.Endpoints
             }
         }
 
-
         private static async Task<IResult> ConvertAudio(HttpContext context, [FromForm] ConvertAudioDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
@@ -557,9 +522,8 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("Unexpected error: " + ex.Message);
             }
         }
-        private static async Task<IResult> CutVideo(
-       HttpContext context,
-       [FromForm] CutVideoDto dto)
+
+        private static async Task<IResult> CutVideo(HttpContext context, [FromForm] CutVideoDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
             var ffmpegService = context.RequestServices.GetRequiredService<IFFmpegServiceFactory>();
@@ -614,6 +578,7 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("Error: " + ex.Message, statusCode: 500);
             }
         }
+
         private static async Task<IResult> ApplyColorFilter(HttpContext context, [FromForm] ColorFilterDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
@@ -719,6 +684,7 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
+
         private static async Task<IResult> AdjustBrightnessContrast(HttpContext context, [FromForm] BrightnessContrastDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
@@ -981,6 +947,7 @@ namespace FFmpeg.API.Endpoints
             }
         }
 
+      
         private static async Task<IResult> ChangeResolution(HttpContext context, [FromForm] ResizeDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
