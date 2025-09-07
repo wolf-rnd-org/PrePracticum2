@@ -1,41 +1,17 @@
-using Ffmpeg.Command;
+﻿using Ffmpeg.Command;
 using Ffmpeg.Command.Commands;
 using FFmpeg.Core.Models;
 using FFmpeg.Infrastructure.Commands;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace FFmpeg.Infrastructure.Services
 {
     public interface IFFmpegServiceFactory
     {
         ICommand<WatermarkModel> CreateWatermarkCommand();
-
-        ICommand<RemoveAudioModel> CreateRemoveAudioCommand();
-        ICommand<TimestampModel> CreateTimestampCommand();
-        ICommand<ThumbnailModel> CreateThumbnailCommand();
-        ICommand<BlurEffectModel> CreateBlurEffectCommand();
-        ICommand<ReplaceAudioModel> CreateReplaceAudioCommand();
-        ICommand<MergeVideosModel> CreateMergeVideosCommand();
-        ICommand<ConvertAudioModel> CreateConvertAudioCommand();
-        ICommand<ColorFilterModel> CreateColorFilterCommand(); 
-        ICommand<AudioMixModel> CreateMixAudioCommand();
-        ICommand<GIFModel> CreateGifCommand(); 
-        ICommand<CutSectionModel> CreateCutCommand();
-        ICommand<BorderModel> CreateBorderCommand();
-        ICommand<ConvertVideoModel> CreateConvertVideoCommand(); 
-        ICommand<AnimatedTextModel> CreateAnimatedTextCommand();
-        ICommand<GreenScreenModel> CreateGreenScreenCommand();
-        ICommand<ReverseVideoModel> ReverseVideoCommand();
-        ICommand<ResizeModel> CreateResizeCommand();
-        ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand();
-        ICommand<SpeedChangeModel> CreateChangeSpeedCommand();
-        ICommand<SplitScreenModel> CreateSplitScreenCommand();
+        ICommand<ReverseVideoModel> CreateReverseVideoCommand();
+        ICommand<VideoCompressionModel> CreateVideoCompressionCommand();
 
     }
 
@@ -54,106 +30,19 @@ namespace FFmpeg.Infrastructure.Services
             _executor = new FFmpegExecutor(ffmpegPath, logOutput, logger);
             _commandBuilder = new CommandBuilder(configuration);
         }
+
         public ICommand<WatermarkModel> CreateWatermarkCommand()
         {
             return new WatermarkCommand(_executor, _commandBuilder);
         }
-
-        public ICommand<RemoveAudioModel> CreateRemoveAudioCommand()
-        {
-            return new RemoveAudioCommand(_executor, _commandBuilder);
-        }
-
-        
-        public ICommand<SplitScreenModel> CreateSplitScreenCommand()
-        {
-            return new SplitScreenCommand(_executor, _commandBuilder);
-        }
-        public ICommand<ThumbnailModel> CreateThumbnailCommand()
-        {
-            return new ThumbnailCommand(_executor, _commandBuilder);
-        }
-
-        public ICommand<BlurEffectModel> CreateBlurEffectCommand()
-        {
-            return new BlurEffectComand(_executor, _commandBuilder);
-        }
-
-        public ICommand<ReplaceAudioModel> CreateReplaceAudioCommand()
-        {
-            return new ReplaceAudioCommand(_executor, _commandBuilder);
-        }
-
-        public ICommand<TimestampModel> CreateTimestampCommand()
-        {
-            return new TimestampCommand(_executor, _commandBuilder);
-        }
-
-        public ICommand<MergeVideosModel> CreateMergeVideosCommand()
-        {
-            return new MergeVideosCommand(_executor, _commandBuilder);
-        }
-
-        public ICommand<ConvertAudioModel> CreateConvertAudioCommand()
-        {
-            return new ConvertAudioCommand(_executor, _commandBuilder);
-        }
-
-        public ICommand<GIFModel> CreateGifCommand()
-        {
-            return new MakeGIFCommand(_executor, _commandBuilder);  
-        }
-        public ICommand<CutSectionModel> CreateCutCommand()
-        {
-            return new CutSectionCommand(_executor, _commandBuilder);
-        }
-        public ICommand<BorderModel> CreateBorderCommand()
-        {
-            return new BorderCommand(_executor, _commandBuilder);
-        }
-        public ICommand<ConvertVideoModel> CreateConvertVideoCommand()
-        {
-            return new ConvertVideoCommand(_executor, _commandBuilder);
-        }
-
-        public ICommand<AnimatedTextModel> CreateAnimatedTextCommand()
-        {
-            return new AnimatedTextCommand(_executor, _commandBuilder);
-        }
-
-        public ICommand<GreenScreenModel> CreateGreenScreenCommand()
-        {
-            return new GreenScreenReplacerCommand(_executor, _commandBuilder);
-        }
-
-
-        public ICommand<ColorFilterModel> CreateColorFilterCommand()
-        {
-            return new ColorFilterCommand(_executor, _commandBuilder);
-        }
-
-        public ICommand<AudioMixModel> CreateMixAudioCommand()
-        {
-            return new MixAudioCommand(_executor, _commandBuilder, new Logger());
-        }
-        public ICommand<ReverseVideoModel> ReverseVideoCommand()
+        public ICommand<ReverseVideoModel> CreateReverseVideoCommand()
         {
             return new ReverseVideoCommand(_executor, _commandBuilder);
         }
-        public ICommand<ResizeModel> CreateResizeCommand()
+        public ICommand<VideoCompressionModel> CreateVideoCompressionCommand()
         {
-            return new ResizeCommand(_executor, _commandBuilder);
+            return new VideoCompressionCommand(_executor, _commandBuilder);
         }
-        public ICommand<BrightnessContrastModel> CreateBrightnessContrastCommand()
-        {
-            return new BrightnessContrastCommand(_executor, _commandBuilder);
-        }
-
-        public ICommand<SpeedChangeModel> CreateChangeSpeedCommand()
-        {
-            return new SpeedChangeCommand(_executor, _commandBuilder);
-        }
-
 
     }
 }
