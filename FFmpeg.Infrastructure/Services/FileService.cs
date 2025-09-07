@@ -22,6 +22,8 @@ namespace FFmpeg.Infrastructure.Services
             _basePath = Environment.ExpandEnvironmentVariables(
                 _configuration["FFmpeg:Path"] ?? throw new InvalidOperationException("FFmpeg:Path configuration is missing"));
 
+            Directory.CreateDirectory(_basePath);
+
             _inputPath = Path.Combine(_basePath, "Input");
             _outputPath = Path.Combine(_basePath, "Output");
             _tempPath = Path.Combine(_basePath, "Temp");

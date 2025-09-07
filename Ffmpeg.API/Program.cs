@@ -1,4 +1,4 @@
-﻿using Ffmpeg.Command;
+using Ffmpeg.Command;
 using FFmpeg.API.Endpoints;
 using FFmpeg.Core.Interfaces;
 using FFmpeg.Infrastructure.Services;
@@ -42,6 +42,7 @@ builder.Services.AddScoped<IFFmpegServiceFactory>(provider =>
 // Add file service for handling temporary files
 builder.Services.AddScoped<IFileService, FileService>();
 
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
@@ -53,8 +54,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
+app.MapEndpoints();
 
+app.MapGet("/", () => { return "FFmpeg API is running"; });
+app.Run();
 
-// Map endpoints
-app.MapEndpoints();         // Video endpoints
-app.MapAudioEndpoints();    // Audio endpoints
