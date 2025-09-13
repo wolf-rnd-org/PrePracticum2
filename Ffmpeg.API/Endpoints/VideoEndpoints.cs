@@ -38,7 +38,7 @@ namespace FFmpeg.API.Endpoints
                  .DisableAntiforgery()
                  .WithMetadata(new RequestSizeLimitAt
 
-           app.MapPost("/api/video/gif", CreateGif)
+            app.MapPost("/api/video/gif", CreateGif)
                 .DisableAntiforgery()
                 .Accepts<GifDto>("multipart/form-data");
 
@@ -990,8 +990,7 @@ namespace FFmpeg.API.Endpoints
                 return Results.Problem("An error occurred: " + ex.Message, statusCode: 500);
             }
         }
-
-
+      
         private static async Task<IResult> ChangeResolution(HttpContext context, [FromForm] ResizeDto dto)
         {
             var fileService = context.RequestServices.GetRequiredService<IFileService>();
