@@ -25,6 +25,7 @@ namespace FFmpeg.Infrastructure.Services
         ICommand<ConvertAudioModel> CreateConvertAudioCommand();
         ICommand<ColorFilterModel> CreateColorFilterCommand(); 
         ICommand<AudioMixModel> CreateMixAudioCommand();
+        ICommand<RotateVideoModel> CreateRotateVideoCommand();
         ICommand<GIFModel> CreateGifCommand(); 
         ICommand<CutSectionModel> CreateCutCommand();
         ICommand<BorderModel> CreateBorderCommand();
@@ -136,6 +137,12 @@ namespace FFmpeg.Infrastructure.Services
         {
             return new MixAudioCommand(_executor, _commandBuilder, new Logger());
         }
+
+        public ICommand<RotateVideoModel> CreateRotateVideoCommand()
+        {
+            return new RotateVideoCommand(_executor, _commandBuilder);
+        }
+
         public ICommand<ReverseVideoModel> ReverseVideoCommand()
         {
             return new ReverseVideoCommand(_executor, _commandBuilder);
