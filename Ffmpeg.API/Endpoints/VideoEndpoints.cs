@@ -36,7 +36,7 @@ namespace FFmpeg.API.Endpoints
 
             app.MapPost("/api/video/rotate", RotateVideo)
                  .DisableAntiforgery()
-                 .WithMetadata(new RequestSizeLimitAt
+                 .WithMetadata(new RequestSizeLimitAt());
 
             app.MapPost("/api/video/gif", CreateGif)
                 .DisableAntiforgery()
